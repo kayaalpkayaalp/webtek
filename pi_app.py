@@ -2,9 +2,8 @@ import time
 import requests
 # import RPi.GPIO as GPIO  # Raspberry Pi üzerinde donanımları kontrol etmek için kullanılır.
 
-# NOT: Vercel'e yükledikten sonra buraya Vercel bağlantı adresini (URL) yazmalısın.
-# Örnek: API_URL = "https://akilli-ev-siten.vercel.app/api"
-API_URL = "http://localhost:3000/api"  # Şimdilik yerel bilgisayarda test için.
+# NOT: Vercel'e deploy edildi.
+API_URL = "https://webtek-alpha.vercel.app/api"
 
 # GPIO PIN TANIMLAMALARI (Örnek)
 FAN_1_PIN = 17

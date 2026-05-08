@@ -21,12 +21,11 @@ NOT: Eğer servo motor kullanıyorsan TENT_PWM_PIN'e servo bağla.
 """
 
 # ─── API Adresi ─────────────────────────────────────────────────────────────
-# Yerel test için:
+# Vercel'e deploy edildi:
+API_URL = "https://webtek-alpha.vercel.app/api"
+
+# Yerel test için (gerekirse bu satırı aç, üsttekini kapat):
 # API_URL = "http://localhost:3000/api"
-#
-# Vercel'e deploy ettikten sonra buraya kendi URL'ini yaz:
-# API_URL = "https://akilli-ev-xxx.vercel.app/api"
-API_URL = "http://localhost:3000/api"
 
 # ─── Polling Aralığı (saniye) ────────────────────────────────────────────────
 POLL_INTERVAL = 3  # Her 3 saniyede bir API'yi kontrol et
