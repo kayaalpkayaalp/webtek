@@ -1,0 +1,20 @@
+# Raspberry Pi Gereksinimleri
+# pip install -r requirements.txt
+
+# HTTP istekleri (API haberleşmesi)
+requests>=2.31.0
+
+# Sıcaklık sensörü (DHT11 / DHT22) için CircuitPython
+# Kurulum: pip install adafruit-circuitpython-dht
+adafruit-circuitpython-dht>=4.0.0
+
+# Raspberry Pi GPIO
+# NOT: RPi.GPIO genellikle Pi OS'ta önceden yüklüdür.
+# Eğer yoksa: pip install RPi.GPIO
+RPi.GPIO>=0.7.0
+
+# Kamera (picamera2)
+# NOT: picamera2 pip ile değil sistem paketi olarak kurulur:
+# sudo apt install -y python3-picamera2
+# Eğer pip'ten kurulmak istenirse:
+# picamera2>=0.3.12
