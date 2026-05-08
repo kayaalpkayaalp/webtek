@@ -60,7 +60,13 @@ async function getAllState() {
       await kv.hset('akilli_ev_state', DEFAULT_STATE);
       return { ...DEFAULT_STATE };
     }
-    return { ...DEFAULT_STATE, ...state };
+    // Upstash Redis boolean/number döndürebilir → hepsini string'e çevir
+    const merged = { ...DEFAULT_STATE, ...state };
+    const normalized = {};
+    for (const [key, val] of Object.entries(merged)) {
+      normalized[key] = String(val);
+    }
+    return normalized;
   }
   // In-memory fallback
   if (Object.keys(memoryStore).length === 0) {

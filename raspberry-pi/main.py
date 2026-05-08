@@ -20,7 +20,7 @@ import time
 import threading
 import logging
 from config import API_URL, POLL_INTERVAL
-from sensors import read_temperatures, read_rain_sensor
+from sensors import read_temperatures, read_rain_sensor, setup_sensor_gpio
 from actuators import (
     setup_gpio,
     cleanup_gpio,
@@ -63,6 +63,7 @@ def poll_loop():
       - Donanımı güncelle
     """
     setup_gpio()
+    setup_sensor_gpio()
     update_api("pi_connected", "true")
     log.info(f"✅ Raspberry Pi başlatıldı. API: {API_URL}")
 

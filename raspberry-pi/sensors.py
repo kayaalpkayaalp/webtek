@@ -114,5 +114,19 @@ def read_pir() -> bool:
         return False
 
 
+# ── Sensör GPIO Kurulumu ──────────────────────────────────────────────────────
+def setup_sensor_gpio():
+    """Sensör giriş pinlerini başlat (actuators.py'deki setup_gpio'dan sonra çağrılmalı)."""
+    if not HARDWARE_AVAILABLE:
+        return
+    try:
+        from config import PIR_PIN
+        GPIO.setup(RAIN_SENSOR_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(PIR_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        log.info("✅ Sensör GPIO pinleri başlatıldı (yağmur + PIR).")
+    except Exception as e:
+        log.warning(f"Sensör GPIO kurulum hatası: {e}")
+
+
 # Modül yüklendiğinde DHT sensörleri başlat
 _init_dht_sensors()
