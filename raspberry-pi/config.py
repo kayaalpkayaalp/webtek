@@ -28,7 +28,7 @@ API_URL = "https://webtek-alpha.vercel.app/api"
 # API_URL = "http://localhost:3000/api"
 
 # ─── Polling Aralığı (saniye) ────────────────────────────────────────────────
-POLL_INTERVAL = 3  # Her 3 saniyede bir API'yi kontrol et
+POLL_INTERVAL = 1.5  # Her 1.5 saniyede bir API'yi kontrol et
 
 # ─── GPIO Pin Numaraları (BCM) ───────────────────────────────────────────────
 

@@ -46,7 +46,7 @@ function App() {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 3000);
+    const interval = setInterval(fetchStatus, 1500);
     return () => clearInterval(interval);
   }, []);
 
