@@ -153,8 +153,8 @@ function App() {
             <span className="pi-dot"></span>
             {isPiConnected ? 'Pi Bağlı' : 'Pi Çevrimdışı'}
           </div>
-          <div className={`rain-badge ${isRaining ? 'raining' : 'dry'}`}>
-            {isRaining ? '🌧️ Yağmur Var' : '☀️ Hava Açık'}
+          <div className={`rain-badge ${!isPiConnected ? 'dry' : (isRaining ? 'raining' : 'dry')}`} style={!isPiConnected ? { opacity: 0.6 } : {}}>
+            {!isPiConnected ? '❓ Veri Yok' : (isRaining ? '🌧️ Yağmur Var' : '☀️ Hava Açık')}
           </div>
         </div>
         <h1 className="dashboard-title">Akıllı Ev Merkezi</h1>
@@ -167,9 +167,9 @@ function App() {
         <div className="card">
           <div className="card-header">
             <h2>🏕️ Balkon Tentesi</h2>
-            <div className={`status-indicator ${isRaining ? 'badge-warn' : 'badge-ok'}`}>
-              <div className={`status-dot ${isRaining ? 'raining' : 'safe'}`}></div>
-              {isRaining ? 'Yağmur!' : 'Hava Kuru'}
+            <div className={`status-indicator ${!isPiConnected ? 'badge-ok' : (isRaining ? 'badge-warn' : 'badge-ok')}`} style={!isPiConnected ? { opacity: 0.6 } : {}}>
+              <div className={`status-dot ${!isPiConnected ? 'safe' : (isRaining ? 'raining' : 'safe')}`} style={!isPiConnected ? { background: '#94a3b8', boxShadow: 'none' } : {}}></div>
+              {!isPiConnected ? 'Veri Yok' : (isRaining ? 'Yağmur!' : 'Hava Kuru')}
             </div>
           </div>
           <div className="card-content">
@@ -218,16 +218,28 @@ function App() {
               <div className="temp-card">
                 <span className="temp-label">🛋️ Salon</span>
                 <span className="temp-val">
-                  {deviceStates.room_1_temp}
-                  <small style={{ fontSize: '1rem' }}>°C</small>
+                  {isPiConnected ? (
+                    <>
+                      {deviceStates.room_1_temp}
+                      <small style={{ fontSize: '1rem' }}>°C</small>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>Veri Yok</span>
+                  )}
                 </span>
                 <span className="temp-src">DHT11 Sensörü</span>
               </div>
               <div className="temp-card">
                 <span className="temp-label">🛏️ Yatak Odası</span>
                 <span className="temp-val">
-                  {deviceStates.room_2_temp}
-                  <small style={{ fontSize: '1rem' }}>°C</small>
+                  {isPiConnected ? (
+                    <>
+                      {deviceStates.room_2_temp}
+                      <small style={{ fontSize: '1rem' }}>°C</small>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>Veri Yok</span>
+                  )}
                 </span>
                 <span className="temp-src">DHT11 Sensörü</span>
               </div>
@@ -272,11 +284,14 @@ function App() {
         <div className="card">
           <div className="card-header">
             <h2>💡 Dış Kapı Aydınlatma</h2>
-            <div className="status-indicator" style={{
-              background: `rgba(245, 158, 11, ${lightPct / 200 + 0.1})`,
-              borderColor: 'rgba(245, 158, 11, 0.4)'
-            }}>
-              %{lightPct}
+            <div className="status-indicator" style={
+              !isPiConnected ? { background: '#1e293b', borderColor: '#334155', color: '#94a3b8' } :
+              {
+                background: `rgba(245, 158, 11, ${lightPct / 200 + 0.1})`,
+                borderColor: 'rgba(245, 158, 11, 0.4)'
+              }
+            }>
+              {!isPiConnected ? 'Veri Yok' : `%${lightPct}`}
             </div>
           </div>
           <div className="card-content">
@@ -296,8 +311,8 @@ function App() {
               />
             </div>
             <div className="light-visualizer">
-              <div className="light-fill" style={{ width: `${lightPct}%` }}>
-                {lightPct > 20 && <span className="light-label">💡 {lightPct}%</span>}
+              <div className="light-fill" style={{ width: !isPiConnected ? '0%' : `${lightPct}%`, background: !isPiConnected ? '#475569' : '' }}>
+                {isPiConnected && lightPct > 20 && <span className="light-label">💡 {lightPct}%</span>}
               </div>
             </div>
           </div>

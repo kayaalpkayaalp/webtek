@@ -47,6 +47,7 @@ const DEFAULT_STATE = {
   last_photo:        '',
   last_photo_base64: '',
   pi_connected:      'false',
+  pi_last_seen:      '0',
   capture_requested: 'false',
 };
 
@@ -116,6 +117,18 @@ const createTransporter = () => nodemailer.createTransport({
 app.get('/api/status', async (req, res) => {
   try {
     const data = await getAllState();
+    
+    // Pi bağlantı kontrolü (15 saniyeden fazla zaman geçtiyse kopmuş say)
+    if (data.pi_last_seen) {
+      const lastSeen = parseInt(data.pi_last_seen, 10);
+      if (Date.now() - lastSeen > 15000 && data.pi_connected === 'true') {
+        data.pi_connected = 'false';
+        await setState('pi_connected', 'false');
+      }
+    } else {
+      data.pi_connected = 'false';
+    }
+
     res.json({ message: 'success', data });
   } catch (err) {
     console.error('Status hatası:', err);
@@ -268,7 +281,10 @@ app.get('/api/pi-poll', async (req, res) => {
     }
 
     // Pi her poll'da bağlantı durumunu günceller
-    await setState('pi_connected', 'true');
+    await setMultiState({
+      pi_connected: 'true',
+      pi_last_seen: Date.now().toString()
+    });
 
     res.json({ message: 'success', data: state });
   } catch (err) {
