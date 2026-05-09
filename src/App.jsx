@@ -21,6 +21,7 @@ function App() {
   const [notification, setNotification] = useState(null);
   const [photoBase64, setPhotoBase64] = useState(null);
   const prevRainRef = useRef('dry');
+  const isDraggingLightRef = useRef(false);
 
   // ---- Durum verilerini 3 saniyede bir çek ----
   useEffect(() => {
@@ -38,6 +39,12 @@ function App() {
               if (prev.rain_status === 'raining' && newData.rain_status === 'dry') {
                 showNotification('success', '☀️ Yağmur durdu. Tente kontrolü size bırakıldı.');
               }
+              
+              // Kullanıcı kaydırıcıyı sürüklüyorsa, sunucudan gelen ışık değerini yoksay (zıplamayı önle)
+              if (isDraggingLightRef.current) {
+                delete newData.door_light;
+              }
+
               return { ...prev, ...newData };
             });
           }
@@ -307,7 +314,12 @@ function App() {
                 min="0"
                 max="100"
                 value={lightPct}
-                onChange={(e) => updateDeviceState('door_light', e.target.value)}
+                onPointerDown={() => { isDraggingLightRef.current = true; }}
+                onChange={(e) => setDeviceStates(prev => ({ ...prev, door_light: e.target.value }))}
+                onPointerUp={(e) => {
+                  isDraggingLightRef.current = false;
+                  updateDeviceState('door_light', e.target.value);
+                }}
               />
             </div>
             <div className="light-visualizer">
