@@ -3,8 +3,9 @@ import time
 
 PIN = 18
 
-print("GPIO 18 pini uzerinden dogrudan PWM gonderiliyor...")
-print("Lutfen fanin donup donmedigini kontrol et. Cikmak icin CTRL+C'ye bas.")
+print("--- AOD4184 MODUL TESTI ---")
+print("Webden bagimsiz olarak fan hizi her 3 saniyede bir degisecek.")
+print("Cikmak icin CTRL+C'ye bas.\n")
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -14,19 +15,17 @@ GPIO.setup(PIN, GPIO.OUT)
 pwm = GPIO.PWM(PIN, 1000)
 pwm.start(0)
 
+# Test edilecek PWM oranlari (Orijinal ayarlar)
+# Eger fan ters calisiyorsa (Active-Low), asagidaki degerlerin 
+# ters etki (100'de durma, 0'da calisma) gosterdigini fark edeceksin.
+test_levels = [0, 40, 70, 100]
+
 try:
     while True:
-        # Fanin hizini yavas yavas %0'dan %100'e cikar (ChatGPT'nin verdigi ornek kod)
-        for i in range(0, 101, 10):
-            print(f"Guc: %{i}")
-            pwm.ChangeDutyCycle(i)
-            time.sleep(1)
-            
-        # Istersen asagidaki satirlari acarak %100'den %0'a yavas yavas dusmesini de saglayabilirsin
-        # for i in range(100, -1, -10):
-        #     print(f"Guc: %{i}")
-        #     pwm.ChangeDutyCycle(i)
-        #     time.sleep(1)
+        for level in test_levels:
+            print(f"-> PWM Seviyesi ayarlaniyor: %{level}")
+            pwm.ChangeDutyCycle(level)
+            time.sleep(3)  # Her seviyede 3 saniye bekle
 
 except KeyboardInterrupt:
     print("\nTest sonlandiriliyor...")
