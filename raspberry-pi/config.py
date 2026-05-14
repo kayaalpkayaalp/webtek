@@ -4,10 +4,10 @@ config.py — Raspberry Pi Yapılandırma
 Bu dosyada GPIO pin numaralarını ve API URL'ini ayarla.
 
 GPIO Pin Haritası (BCM numaralandırması):
-  - Fan 1 (Salon)           : GPIO 17  — Röle IN1
-  - Fan 2 (Yatak Odası)     : GPIO 27  — Röle IN2
+  - Fan 1 (Salon)           : GPIO 18  — PWM (HW-532 vb.)
+  - Fan 2 (Yatak Odası)     : GPIO 19  — PWM (HW-532 vb.)
   - Isıtıcı (Şerit)         : GPIO 22  — Röle IN3
-  - Kapı Lambası (PWM)       : GPIO 18  — L298N/MOSFET
+  - Kapı Lambası (PWM)       : GPIO 17  — L298N/MOSFET
   - Tente Motor PWM          : GPIO 23  — Motor sürücü
   - Tente Motor Yön A        : GPIO 24  — Motor sürücü IN1
   - Tente Motor Yön B        : GPIO 25  — Motor sürücü IN2
@@ -32,15 +32,23 @@ POLL_INTERVAL = 1.5  # Her 1.5 saniyede bir API'yi kontrol et
 
 # ─── GPIO Pin Numaraları (BCM) ───────────────────────────────────────────────
 
-# Fanlar (Röle - LOW=açık, HIGH=kapalı — optolü rölede genelde ters)
-FAN_1_PIN   = 17   # Salon Fanı
-FAN_2_PIN   = 27   # Yatak Odası Fanı
+# Fanlar (PWM Hız Kontrolü - HW-532 vb. MOSFET)
+FAN_1_PIN   = 18   # Salon Fanı (Hardware PWM destekli)
+FAN_2_PIN   = 19   # Yatak Odası Fanı (Hardware PWM destekli)
+
+# Fan Hız Değerleri (duty cycle %)
+FAN_SPEEDS = {
+    "off":    0,
+    "slow":   40,
+    "medium": 70,
+    "fast":   100,
+}
 
 # Isıtıcı Rölesi
 HEATER_PIN  = 22
 
 # Kapı Lambası (PWM ile 0-100 parlaklık)
-DOOR_LIGHT_PWM_PIN = 18
+DOOR_LIGHT_PWM_PIN = 17  # 18 numaralı pini fan için ayırdığımızdan bunu 17'ye aldık.
 DOOR_LIGHT_FREQ    = 100  # Hz
 
 # Tente Motor Sürücü (L298N veya benzeri)

@@ -22,7 +22,7 @@ except ImportError:
     log.warning("⚠️  RPi.GPIO bulunamadı — simülasyon modu aktif.")
 
 from config import (
-    FAN_1_PIN, FAN_2_PIN,
+    FAN_1_PIN, FAN_2_PIN, FAN_SPEEDS,
     HEATER_PIN,
     DOOR_LIGHT_PWM_PIN, DOOR_LIGHT_FREQ,
     TENT_ENA_PIN, TENT_IN1_PIN, TENT_IN2_PIN,
@@ -32,11 +32,13 @@ from config import (
 # ── PWM Nesneleri ─────────────────────────────────────────────────────────────
 _light_pwm = None
 _tent_pwm  = None
+_fan1_pwm  = None
+_fan2_pwm  = None
 
 
 def setup_gpio():
     """GPIO pinlerini başlat."""
-    global _light_pwm, _tent_pwm
+    global _light_pwm, _tent_pwm, _fan1_pwm, _fan2_pwm
 
     if not HARDWARE_AVAILABLE:
         log.info("[SIM] GPIO ayarları yapıldı (simülasyon)")
@@ -45,9 +47,17 @@ def setup_gpio():
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
 
-    # Röle pinleri (çıkış — başlangıçta HIGH = kapalı)
-    for pin in [FAN_1_PIN, FAN_2_PIN, HEATER_PIN]:
-        GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
+    # Isıtıcı rölesi (başlangıçta HIGH = kapalı)
+    GPIO.setup(HEATER_PIN, GPIO.OUT, initial=GPIO.HIGH)
+
+    # Fan pinleri (PWM MOSFET için)
+    GPIO.setup(FAN_1_PIN, GPIO.OUT)
+    _fan1_pwm = GPIO.PWM(FAN_1_PIN, 1000) # 1kHz
+    _fan1_pwm.start(0)
+
+    GPIO.setup(FAN_2_PIN, GPIO.OUT)
+    _fan2_pwm = GPIO.PWM(FAN_2_PIN, 1000)
+    _fan2_pwm.start(0)
 
     # Tente motor pinleri
     GPIO.setup(TENT_ENA_PIN, GPIO.OUT)
@@ -73,6 +83,8 @@ def cleanup_gpio():
     try:
         if _light_pwm: _light_pwm.stop()
         if _tent_pwm:  _tent_pwm.stop()
+        if _fan1_pwm:  _fan1_pwm.stop()
+        if _fan2_pwm:  _fan2_pwm.stop()
         GPIO.cleanup()
         log.info("GPIO temizlendi.")
     except Exception as e:
@@ -83,27 +95,23 @@ def cleanup_gpio():
 _last_states = {}
 
 # ── Fan Kontrolü ──────────────────────────────────────────────────────────────
-# Tek röleli basit fan:  off=HIGH, on=LOW (optolü röle çoğunlukla ters çalışır)
-# PWM hız için ek bir MOSFET veya L298N kartı gerekir.
-# Bu örnekte: off → röle HIGH, slow/medium/fast → röle LOW (tam hız röle ile)
-# Gerçekçi PWM için FAN_X_PWM_PIN ayrı bir pin tanımlaması gerekir.
+# Fanlar HW-532 (MOSFET) kullanılarak PWM ile kontrol edilir.
 
 def apply_fan_state(fan_number: int, state: str):
-    pin = FAN_1_PIN if fan_number == 1 else FAN_2_PIN
     key = f"fan_{fan_number}"
+    duty = FAN_SPEEDS.get(state, 0)
+    pwm_obj = _fan1_pwm if fan_number == 1 else _fan2_pwm
 
     if _last_states.get(key) != state:
         speed_map = {"off": "KAPALI", "slow": "YAVAŞ", "medium": "ORTA", "fast": "HIZLI"}
-        log.info(f"💨 Fan {fan_number}: {speed_map.get(state, state)}")
+        log.info(f"💨 Fan {fan_number}: {speed_map.get(state, state)} (%{duty} duty cycle)")
         _last_states[key] = state
 
     if not HARDWARE_AVAILABLE:
         return
 
-    if state == "off":
-        GPIO.output(pin, GPIO.HIGH)
-    else:
-        GPIO.output(pin, GPIO.LOW)
+    if pwm_obj:
+        pwm_obj.ChangeDutyCycle(duty)
 
 
 # ── Isıtıcı Kontrolü ──────────────────────────────────────────────────────────
