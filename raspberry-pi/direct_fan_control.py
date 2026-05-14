@@ -40,8 +40,6 @@ pwm.start(0)
 print("--- Direct Fan 1 PWM Control (Web API) ---")
 print("Press CTRL+C to stop.\n")
 
-prev_state = None  # Track the last fan command
-
 try:
     while True:
         try:
@@ -54,16 +52,11 @@ try:
             # Parse JSON – we only need the "fan_1" key.
             data = response.json().get("data", {})
             state = data.get("fan_1", "off")  # default to "off" if missing
-
-            # Determine duty cycle based on the mapping.
             duty = FAN_SPEEDS.get(state, 0)
 
-            # Apply PWM only when the command actually changes.
-            if state != prev_state:
-                pwm.ChangeDutyCycle(duty)
-                print(f"⚙️  Web command: fan_1 = '{state}' → PWM %{duty}")
-                prev_state = state
-            # else: same state – do nothing (keep current voltage)
+            # Apply PWM on every poll to ensure the signal stays active.
+            pwm.ChangeDutyCycle(duty)
+            print(f"⚙️  Web command: fan_1 = '{state}' → PWM %{duty}")
 
         except Exception as e:
             print(f"❗ API error: {e}")
