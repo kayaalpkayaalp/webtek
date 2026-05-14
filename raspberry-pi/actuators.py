@@ -79,6 +79,9 @@ def cleanup_gpio():
         log.warning(f"GPIO cleanup hatası: {e}")
 
 
+# ── Durum Takibi (sadece değiştiğinde log bas) ────────────────────────────────
+_last_states = {}
+
 # ── Fan Kontrolü ──────────────────────────────────────────────────────────────
 # Tek röleli basit fan:  off=HIGH, on=LOW (optolü röle çoğunlukla ters çalışır)
 # PWM hız için ek bir MOSFET veya L298N kartı gerekir.
@@ -87,25 +90,29 @@ def cleanup_gpio():
 
 def apply_fan_state(fan_number: int, state: str):
     pin = FAN_1_PIN if fan_number == 1 else FAN_2_PIN
-    label = f"Fan {fan_number}"
+    key = f"fan_{fan_number}"
 
-    speed_map = {"off": "KAPALI", "slow": "YAVAŞ", "medium": "ORTA", "fast": "HIZLI"}
-    log.info(f"💨 {label}: {speed_map.get(state, state)}")
+    if _last_states.get(key) != state:
+        speed_map = {"off": "KAPALI", "slow": "YAVAŞ", "medium": "ORTA", "fast": "HIZLI"}
+        log.info(f"💨 Fan {fan_number}: {speed_map.get(state, state)}")
+        _last_states[key] = state
 
     if not HARDWARE_AVAILABLE:
         return
 
     if state == "off":
-        GPIO.output(pin, GPIO.HIGH)  # Röle kapalı (optolü: HIGH = devre açık)
+        GPIO.output(pin, GPIO.HIGH)
     else:
-        GPIO.output(pin, GPIO.LOW)   # Röle açık → fan çalışıyor
-        # PWM hız kontrolü için ek sürücü kartı gerekir (burada tam hız)
+        GPIO.output(pin, GPIO.LOW)
 
 
 # ── Isıtıcı Kontrolü ──────────────────────────────────────────────────────────
 def apply_heater_state(state: str):
     on = (state == "on")
-    log.info(f"🔥 Isıtıcı: {'AÇIK' if on else 'KAPALI'}")
+
+    if _last_states.get("heater") != state:
+        log.info(f"🔥 Isıtıcı: {'AÇIK' if on else 'KAPALI'}")
+        _last_states["heater"] = state
 
     if not HARDWARE_AVAILABLE:
         return
@@ -116,7 +123,10 @@ def apply_heater_state(state: str):
 # ── Tente Motor Kontrolü ──────────────────────────────────────────────────────
 def apply_tent_state(state: str):
     duty = TENT_SPEEDS.get(state, 0)
-    log.info(f"🏕️  Tente: {state.upper()} (%{duty} duty cycle)")
+
+    if _last_states.get("tent") != state:
+        log.info(f"🏕️  Tente: {state.upper()} (%{duty} duty cycle)")
+        _last_states["tent"] = state
 
     if not HARDWARE_AVAILABLE:
         return
@@ -126,7 +136,6 @@ def apply_tent_state(state: str):
         GPIO.output(TENT_IN1_PIN, GPIO.LOW)
         GPIO.output(TENT_IN2_PIN, GPIO.LOW)
     else:
-        # İleri yön (açılıyor)
         GPIO.output(TENT_IN1_PIN, GPIO.HIGH)
         GPIO.output(TENT_IN2_PIN, GPIO.LOW)
         _tent_pwm.ChangeDutyCycle(duty)
@@ -137,8 +146,11 @@ def apply_door_light(intensity: int):
     """
     intensity: 0-100 arası parlaklık değeri
     """
-    intensity = max(0, min(100, intensity))  # Sınır kontrolü
-    log.info(f"💡 Kapı Lambası: %{intensity}")
+    intensity = max(0, min(100, intensity))
+
+    if _last_states.get("light") != intensity:
+        log.info(f"💡 Kapı Lambası: %{intensity}")
+        _last_states["light"] = intensity
 
     if not HARDWARE_AVAILABLE:
         return
