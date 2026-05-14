@@ -107,11 +107,8 @@ def apply_fan_state(fan_number: int, state: str):
         log.info(f"💨 Fan {fan_number}: {speed_map.get(state, state)} (%{duty} duty cycle)")
         _last_states[key] = state
 
-    if not HARDWARE_AVAILABLE:
-        return
-
-    if pwm_obj:
-        pwm_obj.ChangeDutyCycle(duty)
+        if HARDWARE_AVAILABLE and pwm_obj:
+            pwm_obj.ChangeDutyCycle(duty)
 
 
 # ── Isıtıcı Kontrolü ──────────────────────────────────────────────────────────
@@ -122,10 +119,8 @@ def apply_heater_state(state: str):
         log.info(f"🔥 Isıtıcı: {'AÇIK' if on else 'KAPALI'}")
         _last_states["heater"] = state
 
-    if not HARDWARE_AVAILABLE:
-        return
-
-    GPIO.output(HEATER_PIN, GPIO.LOW if on else GPIO.HIGH)
+        if HARDWARE_AVAILABLE:
+            GPIO.output(HEATER_PIN, GPIO.LOW if on else GPIO.HIGH)
 
 
 # ── Tente Motor Kontrolü ──────────────────────────────────────────────────────
@@ -136,17 +131,15 @@ def apply_tent_state(state: str):
         log.info(f"🏕️  Tente: {state.upper()} (%{duty} duty cycle)")
         _last_states["tent"] = state
 
-    if not HARDWARE_AVAILABLE:
-        return
-
-    if state == "closed":
-        _tent_pwm.ChangeDutyCycle(0)
-        GPIO.output(TENT_IN1_PIN, GPIO.LOW)
-        GPIO.output(TENT_IN2_PIN, GPIO.LOW)
-    else:
-        GPIO.output(TENT_IN1_PIN, GPIO.HIGH)
-        GPIO.output(TENT_IN2_PIN, GPIO.LOW)
-        _tent_pwm.ChangeDutyCycle(duty)
+        if HARDWARE_AVAILABLE:
+            if state == "closed":
+                _tent_pwm.ChangeDutyCycle(0)
+                GPIO.output(TENT_IN1_PIN, GPIO.LOW)
+                GPIO.output(TENT_IN2_PIN, GPIO.LOW)
+            else:
+                GPIO.output(TENT_IN1_PIN, GPIO.HIGH)
+                GPIO.output(TENT_IN2_PIN, GPIO.LOW)
+                _tent_pwm.ChangeDutyCycle(duty)
 
 
 # ── Kapı Lambası PWM ──────────────────────────────────────────────────────────
@@ -160,7 +153,5 @@ def apply_door_light(intensity: int):
         log.info(f"💡 Kapı Lambası: %{intensity}")
         _last_states["light"] = intensity
 
-    if not HARDWARE_AVAILABLE:
-        return
-
-    _light_pwm.ChangeDutyCycle(intensity)
+        if HARDWARE_AVAILABLE:
+            _light_pwm.ChangeDutyCycle(intensity)
