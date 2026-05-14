@@ -9,26 +9,22 @@ POLL_INTERVAL = 2  # seconds between API polls
 FAN_PIN = 18
 
 # ---------------------------------------------------------------------------
-# ACTIVE‑LOW handling
-# Set to True if your fan driver (MOSFET, relay, etc.) is active‑low.
-# When ACTIVE_LOW is True the PWM values are inverted so that "fast" => 0% (full power)
-# and "off"   => 100% (motor stopped).
+# ACTIVE‑LOW handling (set to False because we want 3.3 V for "fast")
 # ---------------------------------------------------------------------------
 ACTIVE_LOW = False
 
+# Only two states are needed for the requested behavior:
+#   "fast" -> full 3.3 V (PWM 100%)
+#   "off"  -> 0 V (PWM 0%)
 if ACTIVE_LOW:
     FAN_SPEEDS = {
-        "off":    100,   # 100% PWM → motor OFF
-        "slow":   60,    # 60% PWM  → ~40% speed
-        "medium": 30,    # 30% PWM  → ~70% speed
-        "fast":   0,     # 0% PWM   → 100% speed (full power)
+        "off":    100,  # 100% PWM → motor OFF (active‑low)
+        "fast":   0,    # 0% PWM   → full power
     }
 else:
     FAN_SPEEDS = {
-        "off":    0,
-        "slow":   40,
-        "medium": 70,
-        "fast":   100,
+        "off":    0,    # 0% PWM → motor OFF
+        "fast":   100,  # 100% PWM → full 3.3 V
     }
 
 # ---------------------------------------------------------------------------
@@ -41,48 +37,40 @@ GPIO.setup(FAN_PIN, GPIO.OUT)
 pwm = GPIO.PWM(FAN_PIN, 1000)   # 1 kHz PWM frequency
 pwm.start(0)
 
-print("--- Direkt Fan 1 PWM Kontrolü (Web API) ---")
-print("CTRL+C ile durdurabilirsiniz.\n")
+print("--- Direct Fan 1 PWM Control (Web API) ---")
+print("Press CTRL+C to stop.\n")
 
-prev_state = None  # track last received fan command
+prev_state = None  # Track the last fan command
 
 try:
     while True:
         try:
             response = requests.get(f"{API_URL}/pi-poll", timeout=5)
             if response.status_code != 200:
-                print(f"⛔ API yanıt vermedi (status {response.status_code}), tekrar deneniyor…")
+                print(f"⛔ API responded with status {response.status_code}, retrying…")
                 time.sleep(POLL_INTERVAL)
                 continue
 
-            # -------------------------------------------------------------------
-            # Debug: show raw JSON for inspection (nice formatted output)
-            # -------------------------------------------------------------------
-            try:
-                pretty = json.dumps(response.json(), indent=2, ensure_ascii=False)
-                print("🔎 API JSON:", pretty)
-            except Exception:
-                print("🔎 API RAW TEXT:", response.text[:120], "…")
-
+            # Parse JSON – we only need the "fan_1" key.
             data = response.json().get("data", {})
-            state = data.get("fan_1", "off")
+            state = data.get("fan_1", "off")  # default to "off" if missing
+
+            # Determine duty cycle based on the mapping.
             duty = FAN_SPEEDS.get(state, 0)
 
-            # Apply PWM only when the command actually changes – prevents stutter.
+            # Apply PWM only when the command actually changes.
             if state != prev_state:
                 pwm.ChangeDutyCycle(duty)
-                print(f"⚙️  Web komutu: fan_1 = \"{state}\" → PWM %{duty}")
+                print(f"⚙️  Web command: fan_1 = '{state}' → PWM %{duty}")
                 prev_state = state
-            else:
-                # same command as before – do nothing (quiet)
-                pass
+            # else: same state – do nothing (keep current voltage)
 
         except Exception as e:
-            print(f"❗ API hatası: {e}")
+            print(f"❗ API error: {e}")
 
         time.sleep(POLL_INTERVAL)
 
 except KeyboardInterrupt:
-    print("\n🛑 Program sonlandırıldı.")
+    print("\n🛑 Program stopped by user.")
     pwm.stop()
     GPIO.cleanup()
