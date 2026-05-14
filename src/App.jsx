@@ -234,7 +234,7 @@ function App() {
                     <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>Veri Yok</span>
                   )}
                 </span>
-                <span className="temp-src">DHT11 Sensörü</span>
+                <span className="temp-src">Sıcaklık Sensörü</span>
               </div>
               <div className="temp-card">
                 <span className="temp-label">🛏️ Yatak Odası</span>
@@ -248,7 +248,7 @@ function App() {
                     <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>Veri Yok</span>
                   )}
                 </span>
-                <span className="temp-src">DHT11 Sensörü</span>
+                <span className="temp-src">Sıcaklık Sensörü</span>
               </div>
             </div>
             <p className="label-text" style={{ marginTop: '0.5rem' }}>Merkezi Şerit Isıtıcı (Her İki Oda)</p>

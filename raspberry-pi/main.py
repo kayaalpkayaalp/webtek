@@ -100,11 +100,11 @@ def poll_loop():
             # ── 4. Sıcaklık Sensörlerini Oku ─────────────────────
             room1_temp, room2_temp = read_temperatures()
 
-            if str(room1_temp) != str(state.get("room_1_temp", "")):
+            if room1_temp is not None and str(room1_temp) != str(state.get("room_1_temp", "")):
                 update_api("room_1_temp", room1_temp)
                 log.info(f"🌡️  Salon sıcaklığı: {room1_temp}°C")
 
-            if str(room2_temp) != str(state.get("room_2_temp", "")):
+            if room2_temp is not None and str(room2_temp) != str(state.get("room_2_temp", "")):
                 update_api("room_2_temp", room2_temp)
                 log.info(f"🌡️  Yatak odası sıcaklığı: {room2_temp}°C")
 
