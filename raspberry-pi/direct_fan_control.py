@@ -1,7 +1,7 @@
 import time, json, requests, RPi.GPIO as GPIO
 
 # ---------------------------------------------------------------------------
-# Direct PWM control of Fan 1 (GPIO 18) via the Web API.
+# Direct on/off control of Fan 1 (GPIO 18) via the Web API.
 # ---------------------------------------------------------------------------
 API_URL = "https://webtek-alpha.vercel.app/api"
 POLL_INTERVAL = 2  # seconds between API polls
@@ -9,23 +9,9 @@ POLL_INTERVAL = 2  # seconds between API polls
 FAN_PIN = 18
 
 # ---------------------------------------------------------------------------
-# ACTIVE‑LOW handling (set to False because we want 3.3 V for "fast")
+# ACTIVE‑LOW handling (False = normal logic, True = inverted)
 # ---------------------------------------------------------------------------
 ACTIVE_LOW = False
-
-# Only two states are needed for the requested behavior:
-#   "fast" -> full 3.3 V (PWM 100%)
-#   "off"  -> 0 V (PWM 0%)
-if ACTIVE_LOW:
-    FAN_SPEEDS = {
-        "off":    100,  # 100% PWM → motor OFF (active‑low)
-        "fast":   0,    # 0% PWM   → full power
-    }
-else:
-    FAN_SPEEDS = {
-        "off":    0,    # 0% PWM → motor OFF
-        "fast":   100,  # 100% PWM → full 3.3 V
-    }
 
 # ---------------------------------------------------------------------------
 # GPIO setup – performed only once.
@@ -34,11 +20,16 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(FAN_PIN, GPIO.OUT)
 
-pwm = GPIO.PWM(FAN_PIN, 1000)   # 1 kHz PWM frequency
-pwm.start(0)
+# Ensure fan is off at start
+if ACTIVE_LOW:
+    GPIO.output(FAN_PIN, GPIO.LOW)   # LOW = OFF for active‑low
+else:
+    GPIO.output(FAN_PIN, GPIO.LOW)   # LOW = OFF for normal logic
 
-print("--- Direct Fan 1 PWM Control (Web API) ---")
+print("--- Direct Fan 1 ON/OFF Control (Web API) ---")
 print("Press CTRL+C to stop.\n")
+
+prev_state = None
 
 try:
     while True:
@@ -49,14 +40,22 @@ try:
                 time.sleep(POLL_INTERVAL)
                 continue
 
-            # Parse JSON – we only need the "fan_1" key.
             data = response.json().get("data", {})
-            state = data.get("fan_1", "off")  # default to "off" if missing
-            duty = FAN_SPEEDS.get(state, 0)
+            state = data.get("fan_1", "off")  # default to off
 
-            # Apply PWM on every poll to ensure the signal stays active.
-            pwm.ChangeDutyCycle(duty)
-            print(f"⚙️  Web command: fan_1 = '{state}' → PWM %{duty}")
+            # Only act when state changes.
+            if state != prev_state:
+                if ACTIVE_LOW:
+                    # In active‑low, "fast" → LOW (turn on), "off" → HIGH (turn off)
+                    gpio_state = GPIO.LOW if state == "fast" else GPIO.HIGH
+                else:
+                    # Normal logic: "fast" → HIGH, "off" → LOW
+                    gpio_state = GPIO.HIGH if state == "fast" else GPIO.LOW
+
+                GPIO.output(FAN_PIN, gpio_state)
+                print(f"⚙️  Web command: fan_1 = '{state}' → GPIO {'HIGH' if gpio_state == GPIO.HIGH else 'LOW'}")
+                prev_state = state
+            # else: same state – keep current output
 
         except Exception as e:
             print(f"❗ API error: {e}")
@@ -65,5 +64,9 @@ try:
 
 except KeyboardInterrupt:
     print("\n🛑 Program stopped by user.")
-    pwm.stop()
+    # Turn fan off before cleanup
+    if ACTIVE_LOW:
+        GPIO.output(FAN_PIN, GPIO.HIGH)
+    else:
+        GPIO.output(FAN_PIN, GPIO.LOW)
     GPIO.cleanup()
