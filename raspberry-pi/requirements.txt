@@ -18,3 +18,7 @@ RPi.GPIO>=0.7.0
 # sudo apt install -y python3-picamera2
 # Eğer pip'ten kurulmak istenirse:
 # picamera2>=0.3.12
+
+# PCA9685 PWM/Servo Sürücü Kartı için:
+adafruit-circuitpython-pca9685>=2.3.0
+

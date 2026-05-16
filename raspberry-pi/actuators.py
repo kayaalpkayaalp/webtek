@@ -21,8 +21,17 @@ except ImportError:
     HARDWARE_AVAILABLE = False
     log.warning("⚠️  RPi.GPIO bulunamadı — simülasyon modu aktif.")
 
+try:
+    import board
+    import busio
+    import adafruit_pca9685
+    PCA_AVAILABLE = True
+except ImportError:
+    PCA_AVAILABLE = False
+    log.warning("⚠️  PCA9685 kütüphanesi bulunamadı. Lütfen kurun: pip install adafruit-circuitpython-pca9685")
+
 from config import (
-    FAN_1_PIN, FAN_2_PIN, FAN_SPEEDS,
+    PCA_FAN_1_CHANNEL, PCA_FAN_2_CHANNEL, FAN_SPEEDS,
     HEATER_PIN,
     DOOR_LIGHT_PWM_PIN, DOOR_LIGHT_FREQ,
     TENT_ENA_PIN, TENT_IN1_PIN, TENT_IN2_PIN,
@@ -32,13 +41,12 @@ from config import (
 # ── PWM Nesneleri ─────────────────────────────────────────────────────────────
 _light_pwm = None
 _tent_pwm  = None
-_fan1_pwm  = None
-_fan2_pwm  = None
+pca        = None  # PCA9685 nesnesi
 
 
 def setup_gpio():
     """GPIO pinlerini başlat."""
-    global _light_pwm, _tent_pwm, _fan1_pwm, _fan2_pwm
+    global _light_pwm, _tent_pwm, pca, PCA_AVAILABLE
 
     if not HARDWARE_AVAILABLE:
         log.info("[SIM] GPIO ayarları yapıldı (simülasyon)")
@@ -50,14 +58,20 @@ def setup_gpio():
     # Isıtıcı rölesi (başlangıçta HIGH = kapalı)
     GPIO.setup(HEATER_PIN, GPIO.OUT, initial=GPIO.HIGH)
 
-    # Fan pinleri (PWM MOSFET için)
-    GPIO.setup(FAN_1_PIN, GPIO.OUT)
-    _fan1_pwm = GPIO.PWM(FAN_1_PIN, 1000) # 1kHz
-    _fan1_pwm.start(0)
-
-    GPIO.setup(FAN_2_PIN, GPIO.OUT)
-    _fan2_pwm = GPIO.PWM(FAN_2_PIN, 1000)
-    _fan2_pwm.start(0)
+    # PCA9685 I2C Sürücü (Fanlar için)
+    if PCA_AVAILABLE:
+        try:
+            i2c = busio.I2C(board.SCL, board.SDA)
+            pca = adafruit_pca9685.PCA9685(i2c)
+            pca.frequency = 1000  # 1 kHz frekans (Fanlar için uygun)
+            log.info("✅ PCA9685 I2C Sürücüsü başlatıldı (Fanlar).")
+            
+            # Başlangıçta fanları kapat
+            if PCA_FAN_1_CHANNEL is not None: pca.channels[PCA_FAN_1_CHANNEL].duty_cycle = 0
+            if PCA_FAN_2_CHANNEL is not None: pca.channels[PCA_FAN_2_CHANNEL].duty_cycle = 0
+        except Exception as e:
+            log.error(f"❌ PCA9685 başlatılamadı: {e}")
+            PCA_AVAILABLE = False
 
     # Tente motor pinleri
     GPIO.setup(TENT_ENA_PIN, GPIO.OUT)
@@ -83,8 +97,10 @@ def cleanup_gpio():
     try:
         if _light_pwm: _light_pwm.stop()
         if _tent_pwm:  _tent_pwm.stop()
-        if _fan1_pwm:  _fan1_pwm.stop()
-        if _fan2_pwm:  _fan2_pwm.stop()
+        if pca:
+            if PCA_FAN_1_CHANNEL is not None: pca.channels[PCA_FAN_1_CHANNEL].duty_cycle = 0
+            if PCA_FAN_2_CHANNEL is not None: pca.channels[PCA_FAN_2_CHANNEL].duty_cycle = 0
+            pca.deinit()
         GPIO.cleanup()
         log.info("GPIO temizlendi.")
     except Exception as e:
@@ -95,20 +111,26 @@ def cleanup_gpio():
 _last_states = {}
 
 # ── Fan Kontrolü ──────────────────────────────────────────────────────────────
-# Fanlar HW-532 (MOSFET) kullanılarak PWM ile kontrol edilir.
+# Fanlar PCA9685 I2C modülü üzerinden kontrol edilir.
+# PCA9685 16-bit çözünürlüğe sahiptir (0 - 65535 arası değer alır).
 
 def apply_fan_state(fan_number: int, state: str):
     key = f"fan_{fan_number}"
-    duty = FAN_SPEEDS.get(state, 0)
-    pwm_obj = _fan1_pwm if fan_number == 1 else _fan2_pwm
+    duty_percent = FAN_SPEEDS.get(state, 0)
+    
+    # Yüzdelik değeri PCA9685 için 16-bit (0-65535) değere dönüştür:
+    duty_16bit = int(65535 * (duty_percent / 100.0))
 
     if _last_states.get(key) != state:
         speed_map = {"off": "KAPALI", "slow": "YAVAŞ", "medium": "ORTA", "fast": "HIZLI"}
-        log.info(f"💨 Fan {fan_number}: {speed_map.get(state, state)} (%{duty} duty cycle)")
+        log.info(f"💨 Fan {fan_number}: {speed_map.get(state, state)} (%{duty_percent} duty cycle - PCA9685)")
         _last_states[key] = state
 
-        if HARDWARE_AVAILABLE and pwm_obj:
-            pwm_obj.ChangeDutyCycle(duty)
+        if PCA_AVAILABLE and pca is not None:
+            if fan_number == 1 and PCA_FAN_1_CHANNEL is not None:
+                pca.channels[PCA_FAN_1_CHANNEL].duty_cycle = duty_16bit
+            elif fan_number == 2 and PCA_FAN_2_CHANNEL is not None:
+                pca.channels[PCA_FAN_2_CHANNEL].duty_cycle = duty_16bit
 
 
 # ── Isıtıcı Kontrolü ──────────────────────────────────────────────────────────
