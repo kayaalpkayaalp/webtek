@@ -9,8 +9,8 @@ function App() {
     fan_1: 'off',
     fan_2: 'off',
     door_light: '0',
-    room_1_temp: '22',
-    room_2_temp: '21',
+    room_1_temp: '',
+    room_2_temp: '',
     rain_status: 'dry',
     last_photo: '',
     pi_connected: 'false',
@@ -225,30 +225,34 @@ function App() {
               <div className="temp-card">
                 <span className="temp-label">🛋️ Salon</span>
                 <span className="temp-val">
-                  {isPiConnected ? (
+                  {isPiConnected && deviceStates.room_1_temp ? (
                     <>
                       {deviceStates.room_1_temp}
                       <small style={{ fontSize: '1rem' }}>°C</small>
                     </>
                   ) : (
-                    <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>Veri Yok</span>
+                    <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>
+                      {isPiConnected ? 'Sensör Yok' : 'Veri Yok'}
+                    </span>
                   )}
                 </span>
-                <span className="temp-src">Sıcaklık Sensörü</span>
+                <span className="temp-src">DS18B20 Sensör</span>
               </div>
               <div className="temp-card">
                 <span className="temp-label">🛏️ Yatak Odası</span>
                 <span className="temp-val">
-                  {isPiConnected ? (
+                  {isPiConnected && deviceStates.room_2_temp ? (
                     <>
                       {deviceStates.room_2_temp}
                       <small style={{ fontSize: '1rem' }}>°C</small>
                     </>
                   ) : (
-                    <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>Veri Yok</span>
+                    <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>
+                      {isPiConnected ? 'Sensör Yok' : 'Veri Yok'}
+                    </span>
                   )}
                 </span>
-                <span className="temp-src">Sıcaklık Sensörü</span>
+                <span className="temp-src">DS18B20 Sensör</span>
               </div>
             </div>
             <p className="label-text" style={{ marginTop: '0.5rem' }}>Merkezi Şerit Isıtıcı (Her İki Oda)</p>
