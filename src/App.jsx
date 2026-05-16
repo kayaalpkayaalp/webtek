@@ -34,10 +34,10 @@ function App() {
             setDeviceStates(prev => {
               // Yağmur başladı bildirimi
               if (prev.rain_status === 'dry' && newData.rain_status === 'raining') {
-                showNotification('warning', '🌧️ Yağmur algılandı! Tente otomatik olarak ayarlandı.');
+                showNotification('warning', '🌧️ Yağmur başladı!');
               }
               if (prev.rain_status === 'raining' && newData.rain_status === 'dry') {
-                showNotification('success', '☀️ Yağmur durdu. Tente kontrolü size bırakıldı.');
+                showNotification('success', '☀️ Yağmur durdu.');
               }
               
               // Kullanıcı kaydırıcıyı sürüklüyorsa, sunucudan gelen ışık değerini yoksay (zıplamayı önle)
@@ -181,8 +181,8 @@ function App() {
           </div>
           <div className="card-content">
             {isRaining && (
-              <div className="auto-banner">
-                🤖 Yağmur modu aktif — Tente otomatik yavaş/orta hıza geçti
+              <div className="auto-banner" style={{background: 'var(--danger)'}}>
+                🌧️ Yağmur yağıyor, tenteyi kapatmayı unutmayın!
               </div>
             )}
             <p className="label-text">Motor Hız Kontrolü</p>

@@ -152,6 +152,8 @@ app.post('/api/update', async (req, res) => {
     await setState(device_name, state_value);
 
     // ===== YAĞMUR OTOMASYONU =====
+    // Kullanıcı isteği üzerine yağmur otomasyonu iptal edildi. Sadece durumu günceller.
+    /*
     if (device_name === 'rain_status' && state_value === 'raining') {
       const state = await getAllState();
       if (state.tent !== 'closed') {
@@ -160,6 +162,7 @@ app.post('/api/update', async (req, res) => {
         console.log(`[Otomasyon] Yağmur algılandı → Tente ${autoSpeed} hıza alındı`);
       }
     }
+    */
 
     const updatedState = await getAllState();
     res.json({ message: 'success', data: updatedState });
