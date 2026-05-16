@@ -127,10 +127,15 @@ def apply_fan_state(fan_number: int, state: str):
         _last_states[key] = state
 
         if PCA_AVAILABLE and pca is not None:
-            if fan_number == 1 and PCA_FAN_1_CHANNEL is not None:
-                pca.channels[PCA_FAN_1_CHANNEL].duty_cycle = duty_16bit
-            elif fan_number == 2 and PCA_FAN_2_CHANNEL is not None:
-                pca.channels[PCA_FAN_2_CHANNEL].duty_cycle = duty_16bit
+            try:
+                if fan_number == 1 and PCA_FAN_1_CHANNEL is not None:
+                    pca.channels[PCA_FAN_1_CHANNEL].duty_cycle = duty_16bit
+                elif fan_number == 2 and PCA_FAN_2_CHANNEL is not None:
+                    pca.channels[PCA_FAN_2_CHANNEL].duty_cycle = duty_16bit
+            except OSError as e:
+                log.error(f"❌ PCA9685 İletişim Hatası (Fan {fan_number} güncellenemedi): {e}")
+                # Hata durumunda _last_states'i geri alalım ki bir sonraki döngüde tekrar denesin
+                _last_states.pop(key, None)
 
 
 # ── Isıtıcı Kontrolü ──────────────────────────────────────────────────────────
