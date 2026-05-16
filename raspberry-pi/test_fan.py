@@ -21,7 +21,7 @@ def test_loop():
         
         print("🔴 Fan KAPALI (Güç Kesildi)")
         GPIO.output(FAN_PIN, GPIO.LOW)
-        time.sleep(3)
+        time.sleep(10)
 
 if __name__ == '__main__':
     setup()
