@@ -187,10 +187,10 @@ function App() {
             )}
             <p className="label-text">Tente Kontrolü</p>
             <button
-              className={`primary-action ${deviceStates.tent === 'closed' ? 'danger-action' : ''}`}
-              style={{ width: '100%', marginBottom: '15px' }}
+              className={`primary-action ${deviceStates.tent === 'closed' ? 'standby-action' : 'danger-action animate-pulse'}`}
+              style={{ width: '100%', marginBottom: '15px', transition: 'all 0.3s ease' }}
               onClick={() => updateDeviceState('tent', 'closed')}>
-              ⛔ Durdur
+              {deviceStates.tent === 'closed' ? '✅ Motor Beklemede' : '⛔ Motoru Durdur'}
             </button>
             
             <div style={{ display: 'flex', gap: '15px' }}>

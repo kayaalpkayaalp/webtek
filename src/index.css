@@ -258,6 +258,26 @@ button.danger-action:hover {
   box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
+button.standby-action {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+button.standby-action:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: none;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(0.98); }
+}
+
 /* Elegant Sliders */
 .slider-container {
   display: flex;
