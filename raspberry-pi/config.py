@@ -32,10 +32,9 @@ POLL_INTERVAL = 1.5  # Her 1.5 saniyede bir API'yi kontrol et
 
 # ─── GPIO Pin Numaraları (BCM) ───────────────────────────────────────────────
 
-# Fanlar (PCA9685 I2C Modülü Üzerinden)
-PCA_FAN_1_CHANNEL = 15  # 15. Kanal (Salon/Ana Fan)
-# Eğer 2. fan da karta bağlanacaksa buraya kanal numarasını girebilirsiniz (örn: 14)
-PCA_FAN_2_CHANNEL = None # Şimdilik sadece 1 fan kullanıldığı için None
+# Fanlar (PWM Hız Kontrolü - Doğrudan GPIO)
+FAN_1_PIN = 18  # Salon Fanı (Hardware PWM destekli)
+FAN_2_PIN = 19  # Yatak Odası Fanı (Hardware PWM destekli)
 
 # Fan Hız Değerleri (duty cycle %)
 FAN_SPEEDS = {
