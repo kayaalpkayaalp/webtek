@@ -1,33 +1,34 @@
 import RPi.GPIO as GPIO
 import time
 
-PIN = 18
+FAN_PIN = 18
 
-print("--- AOD4184 MODUL TESTI ---")
-print("Webden bagimsiz olarak fan hizi her 3 saniyede bir degisecek.")
-print("Cikmak icin CTRL+C'ye bas.\n")
+def setup():
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    GPIO.setup(FAN_PIN, GPIO.OUT)
+    # Başlangıçta kapalı tutalım
+    GPIO.output(FAN_PIN, GPIO.LOW)
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-GPIO.setup(PIN, GPIO.OUT)
-
-# 1000 Hz frekansinda PWM baslatiliyor
-pwm = GPIO.PWM(PIN, 1000)
-pwm.start(0)
-
-# Test edilecek PWM oranlari (Orijinal ayarlar)
-# Eger fan ters calisiyorsa (Active-Low), asagidaki degerlerin 
-# ters etki (100'de durma, 0'da calisma) gosterdigini fark edeceksin.
-test_levels = [0, 40, 70, 100]
-
-try:
+def test_loop():
+    print("💨 Fan test programı başlatıldı (GPIO 18).")
+    print("Durdurmak için klavyeden CTRL+C tuşlarına basın.\n")
+    
     while True:
-        for level in test_levels:
-            print(f"-> PWM Seviyesi ayarlaniyor: %{level}")
-            pwm.ChangeDutyCycle(level)
-            time.sleep(3)  # Her seviyede 3 saniye bekle
+        print("🟢 Fan AÇIK (12V Güç Veriliyor...)")
+        GPIO.output(FAN_PIN, GPIO.HIGH)
+        time.sleep(3)
+        
+        print("🔴 Fan KAPALI (Güç Kesildi)")
+        GPIO.output(FAN_PIN, GPIO.LOW)
+        time.sleep(3)
 
-except KeyboardInterrupt:
-    print("\nTest sonlandiriliyor...")
-    pwm.stop()
-    GPIO.cleanup()
+if __name__ == '__main__':
+    setup()
+    try:
+        test_loop()
+    except KeyboardInterrupt:
+        print("\n🛑 Test durduruldu.")
+    finally:
+        GPIO.cleanup()
+        print("🧹 GPIO pinleri temizlendi.")
