@@ -185,23 +185,31 @@ function App() {
                 🌧️ Yağmur yağıyor, tenteyi kapatmayı unutmayın!
               </div>
             )}
-            <p className="label-text">Motor Hız Kontrolü</p>
-            <div className="button-group">
-              <button
-                className={deviceStates.tent === 'closed' ? 'active danger-active' : ''}
-                onClick={() => updateDeviceState('tent', 'closed')}>
-                ⛔ Durdur
-              </button>
-              <button
-                className={deviceStates.tent === 'forward' ? 'active primary-active' : ''}
-                onClick={() => updateDeviceState('tent', 'forward')}>
-                🔼 Aç (İleri)
-              </button>
-              <button
-                className={deviceStates.tent === 'backward' ? 'active primary-active' : ''}
-                onClick={() => updateDeviceState('tent', 'backward')}>
-                🔽 Kapat (Geri)
-              </button>
+            <p className="label-text">Tente Kontrolü</p>
+            <button
+              className={`primary-action ${deviceStates.tent === 'closed' ? 'danger-action' : ''}`}
+              style={{ width: '100%', marginBottom: '15px' }}
+              onClick={() => updateDeviceState('tent', 'closed')}>
+              ⛔ Durdur
+            </button>
+            
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <div style={{ flex: 1 }}>
+                <p className="label-text" style={{ textAlign: 'center' }}>🔼 Aç (İleri)</p>
+                <div className="button-group" style={{ flexDirection: 'column', gap: '5px' }}>
+                  <button className={deviceStates.tent === 'forward_slow' ? 'active primary-active' : ''} onClick={() => updateDeviceState('tent', 'forward_slow')}>🐢 Yavaş</button>
+                  <button className={deviceStates.tent === 'forward_medium' ? 'active primary-active' : ''} onClick={() => updateDeviceState('tent', 'forward_medium')}>🚶 Orta</button>
+                  <button className={deviceStates.tent === 'forward_fast' ? 'active primary-active' : ''} onClick={() => updateDeviceState('tent', 'forward_fast')}>🚀 Hızlı</button>
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <p className="label-text" style={{ textAlign: 'center' }}>🔽 Kapat (Geri)</p>
+                <div className="button-group" style={{ flexDirection: 'column', gap: '5px' }}>
+                  <button className={deviceStates.tent === 'backward_slow' ? 'active danger-active' : ''} onClick={() => updateDeviceState('tent', 'backward_slow')}>🐢 Yavaş</button>
+                  <button className={deviceStates.tent === 'backward_medium' ? 'active danger-active' : ''} onClick={() => updateDeviceState('tent', 'backward_medium')}>🚶 Orta</button>
+                  <button className={deviceStates.tent === 'backward_fast' ? 'active danger-active' : ''} onClick={() => updateDeviceState('tent', 'backward_fast')}>🚀 Hızlı</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

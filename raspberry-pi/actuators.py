@@ -65,7 +65,7 @@ def _stepper_worker():
             continue
             
         delay = TENT_SPEEDS.get(state, 0.002)
-        direction = -1 if state == "backward" else 1
+        direction = -1 if "backward" in state else 1
         
         # Bir adım at
         for pin_idx in range(4):
