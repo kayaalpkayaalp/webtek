@@ -70,7 +70,7 @@ ROOM1_DHT_PIN   = 4    # Salon
 ROOM2_DHT_PIN   = 5    # Yatak Odası
 
 # Yağmur Sensörü (Dijital çıkış)
-RAIN_SENSOR_PIN = 6    # DO pini (LOW=yağmur var, HIGH=kuru — bazı modüller ters)
+RAIN_SENSOR_PIN = 27   # DO pini (LOW=yağmur var, HIGH=kuru — bazı modüller ters)
 RAIN_ACTIVE_LOW = True  # Çoğu modül LOW geldiğinde algılar
 
 # PIR Hareket Sensörü (Kapı kamerası tetikleyici)
