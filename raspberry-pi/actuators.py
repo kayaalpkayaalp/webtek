@@ -63,7 +63,7 @@ def setup_gpio():
         try:
             i2c = busio.I2C(board.SCL, board.SDA)
             pca = adafruit_pca9685.PCA9685(i2c)
-            pca.frequency = 1000  # 1 kHz frekans (Fanlar için uygun)
+            pca.frequency = 50  # 50 Hz frekans (Fanlar için daha düşük gürültü/EMI)
             log.info("✅ PCA9685 I2C Sürücüsü başlatıldı (Fanlar).")
             
             # Başlangıçta fanları kapat
