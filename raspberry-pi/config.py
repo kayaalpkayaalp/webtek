@@ -34,7 +34,7 @@ POLL_INTERVAL = 1.5  # Her 1.5 saniyede bir API'yi kontrol et
 
 # Fanlar (PWM Hız Kontrolü - Doğrudan GPIO)
 FAN_1_PIN = 18  # Salon Fanı (Hardware PWM destekli)
-FAN_2_PIN = 19  # Yatak Odası Fanı (Hardware PWM destekli)
+FAN_2_PIN = 26  # Yatak Odası Fanı (GPIO 19 Stepper için ayrıldığı için 26'ya alındı)
 
 # Fan Hız Değerleri (duty cycle %)
 FAN_SPEEDS = {
@@ -51,17 +51,15 @@ HEATER_PIN  = 22
 DOOR_LIGHT_PWM_PIN = 17  # 18 numaralı pini fan için ayırdığımızdan bunu 17'ye aldık.
 DOOR_LIGHT_FREQ    = 100  # Hz
 
-# Tente Motor Sürücü (L298N veya benzeri)
-TENT_ENA_PIN = 23   # PWM hız
-TENT_IN1_PIN = 24   # Yön 1
-TENT_IN2_PIN = 25   # Yön 2
+# Tente Motor Sürücü (ULN2003 Stepper Motor)
+TENT_STEP_PINS = [5, 6, 13, 19]  # IN1, IN2, IN3, IN4
 
-# Tente Motor Hız Değerleri (duty cycle %)
+# Tente Motor Hız Değerleri (Adım bekleme süresi saniye cinsinden)
 TENT_SPEEDS = {
     "closed": 0,
-    "slow":   40,
-    "medium": 65,
-    "fast":   100,
+    "slow":   0.005,
+    "medium": 0.003,
+    "fast":   0.001,
 }
 
 # Sıcaklık Sensörleri (DHT11)

@@ -10,6 +10,8 @@ Donanım yoksa simülasyon modunda sadece log basar.
 """
 
 import logging
+import threading
+import time
 
 log = logging.getLogger("actuators")
 
@@ -25,20 +27,56 @@ from config import (
     FAN_1_PIN, FAN_2_PIN, FAN_SPEEDS,
     HEATER_PIN,
     DOOR_LIGHT_PWM_PIN, DOOR_LIGHT_FREQ,
-    TENT_ENA_PIN, TENT_IN1_PIN, TENT_IN2_PIN,
-    TENT_SPEEDS,
+    TENT_STEP_PINS, TENT_SPEEDS,
 )
 
-# ── PWM Nesneleri ─────────────────────────────────────────────────────────────
+# ── PWM ve Durum Nesneleri ────────────────────────────────────────────────────
 _light_pwm = None
-_tent_pwm  = None
 _fan1_pwm  = None
 _fan2_pwm  = None
+
+# Stepper Motor Global Durumları
+_tent_state = "closed"
+_tent_thread = None
+
+# ULN2003 Half-Step (8 Adım) Dizilimi
+_STEP_SEQ = [
+    [1, 0, 0, 0],
+    [1, 1, 0, 0],
+    [0, 1, 0, 0],
+    [0, 1, 1, 0],
+    [0, 0, 1, 0],
+    [0, 0, 1, 1],
+    [0, 0, 0, 1],
+    [1, 0, 0, 1]
+]
+
+def _stepper_worker():
+    """Tente step motorunu arkaplanda döndüren iş parçacığı"""
+    step_index = 0
+    while True:
+        state = _tent_state
+        if state == "closed" or not HARDWARE_AVAILABLE:
+            # Kapalıysa motoru serbest bırak (ısınmaması için akımı kes)
+            if HARDWARE_AVAILABLE:
+                for pin in TENT_STEP_PINS:
+                    GPIO.output(pin, GPIO.LOW)
+            time.sleep(0.1)
+            continue
+            
+        delay = TENT_SPEEDS.get(state, 0.005)
+        
+        # Bir adım at (ileri yönlü)
+        for pin_idx in range(4):
+            GPIO.output(TENT_STEP_PINS[pin_idx], _STEP_SEQ[step_index][pin_idx])
+            
+        step_index = (step_index + 1) % 8
+        time.sleep(delay)
 
 
 def setup_gpio():
     """GPIO pinlerini başlat."""
-    global _light_pwm, _tent_pwm, _fan1_pwm, _fan2_pwm
+    global _light_pwm, _fan1_pwm, _fan2_pwm, _tent_thread
 
     if not HARDWARE_AVAILABLE:
         log.info("[SIM] GPIO ayarları yapıldı (simülasyon)")
@@ -59,19 +97,21 @@ def setup_gpio():
     _fan2_pwm = GPIO.PWM(FAN_2_PIN, 1000)
     _fan2_pwm.start(0)
 
-    # Tente motor pinleri
-    GPIO.setup(TENT_ENA_PIN, GPIO.OUT)
-    GPIO.setup(TENT_IN1_PIN, GPIO.OUT, initial=GPIO.LOW)
-    GPIO.setup(TENT_IN2_PIN, GPIO.OUT, initial=GPIO.LOW)
+    # Tente motor pinleri (ULN2003 Stepper)
+    for pin in TENT_STEP_PINS:
+        GPIO.setup(pin, GPIO.OUT)
+        GPIO.output(pin, GPIO.LOW)
+        
+    # Stepper iş parçacığını başlat
+    if _tent_thread is None:
+        _tent_thread = threading.Thread(target=_stepper_worker, daemon=True)
+        _tent_thread.start()
+        log.info("✅ ULN2003 Stepper iş parçacığı başlatıldı.")
 
     # Kapı lambası PWM
     GPIO.setup(DOOR_LIGHT_PWM_PIN, GPIO.OUT)
     _light_pwm = GPIO.PWM(DOOR_LIGHT_PWM_PIN, DOOR_LIGHT_FREQ)
     _light_pwm.start(0)
-
-    # Tente motor hız PWM
-    _tent_pwm = GPIO.PWM(TENT_ENA_PIN, 1000)
-    _tent_pwm.start(0)
 
     log.info("✅ GPIO kurulumu tamamlandı.")
 
@@ -82,9 +122,11 @@ def cleanup_gpio():
         return
     try:
         if _light_pwm: _light_pwm.stop()
-        if _tent_pwm:  _tent_pwm.stop()
         if _fan1_pwm:  _fan1_pwm.stop()
         if _fan2_pwm:  _fan2_pwm.stop()
+        
+        for pin in TENT_STEP_PINS:
+            GPIO.output(pin, GPIO.LOW)
         GPIO.cleanup()
         log.info("GPIO temizlendi.")
     except Exception as e:
@@ -123,23 +165,13 @@ def apply_heater_state(state: str):
             GPIO.output(HEATER_PIN, GPIO.LOW if on else GPIO.HIGH)
 
 
-# ── Tente Motor Kontrolü ──────────────────────────────────────────────────────
+# ── Tente Motor Kontrolü (ULN2003 Stepper) ────────────────────────────────────
 def apply_tent_state(state: str):
-    duty = TENT_SPEEDS.get(state, 0)
-
+    global _tent_state
     if _last_states.get("tent") != state:
-        log.info(f"🏕️  Tente: {state.upper()} (%{duty} duty cycle)")
+        log.info(f"🏕️  Tente: {state.upper()} (Stepper mod)")
         _last_states["tent"] = state
-
-        if HARDWARE_AVAILABLE:
-            if state == "closed":
-                _tent_pwm.ChangeDutyCycle(0)
-                GPIO.output(TENT_IN1_PIN, GPIO.LOW)
-                GPIO.output(TENT_IN2_PIN, GPIO.LOW)
-            else:
-                GPIO.output(TENT_IN1_PIN, GPIO.HIGH)
-                GPIO.output(TENT_IN2_PIN, GPIO.LOW)
-                _tent_pwm.ChangeDutyCycle(duty)
+        _tent_state = state
 
 
 # ── Kapı Lambası PWM ──────────────────────────────────────────────────────────
