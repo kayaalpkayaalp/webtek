@@ -100,13 +100,23 @@ def poll_loop():
             # ── 4. Sıcaklık Sensörlerini Oku ─────────────────────
             room1_temp, room2_temp = read_temperatures()
 
-            if room1_temp is not None and str(room1_temp) != str(state.get("room_1_temp", "")):
-                update_api("room_1_temp", room1_temp)
-                log.info(f"🌡️  Salon sıcaklığı: {room1_temp}°C")
+            # Salon Sıcaklığı
+            r1_val = str(room1_temp) if room1_temp is not None else ""
+            if r1_val != str(state.get("room_1_temp", "")):
+                update_api("room_1_temp", r1_val)
+                if r1_val:
+                    log.info(f"🌡️  Salon sıcaklığı: {r1_val}°C")
+                else:
+                    log.info("⚠️ Salon sıcaklık sensörü bulunamadı, web arayüzü temizlendi.")
 
-            if room2_temp is not None and str(room2_temp) != str(state.get("room_2_temp", "")):
-                update_api("room_2_temp", room2_temp)
-                log.info(f"🌡️  Yatak odası sıcaklığı: {room2_temp}°C")
+            # Yatak Odası Sıcaklığı
+            r2_val = str(room2_temp) if room2_temp is not None else ""
+            if r2_val != str(state.get("room_2_temp", "")):
+                update_api("room_2_temp", r2_val)
+                if r2_val:
+                    log.info(f"🌡️  Yatak odası sıcaklığı: {r2_val}°C")
+                else:
+                    log.info("⚠️ Yatak odası sıcaklık sensörü bulunamadı, web arayüzü temizlendi.")
 
             # ── 5. Yağmur Sensörünü Oku ───────────────────────────
             rain_status = read_rain_sensor()  # 'raining' veya 'dry'
