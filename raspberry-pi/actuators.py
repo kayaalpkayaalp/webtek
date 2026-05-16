@@ -64,13 +64,14 @@ def _stepper_worker():
             time.sleep(0.1)
             continue
             
-        delay = TENT_SPEEDS.get(state, 0.005)
+        delay = TENT_SPEEDS.get(state, 0.002)
+        direction = -1 if state == "backward" else 1
         
-        # Bir adım at (ileri yönlü)
+        # Bir adım at
         for pin_idx in range(4):
             GPIO.output(TENT_STEP_PINS[pin_idx], _STEP_SEQ[step_index][pin_idx])
             
-        step_index = (step_index + 1) % 8
+        step_index = (step_index + direction) % 8
         time.sleep(delay)
 
 

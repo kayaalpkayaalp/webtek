@@ -190,22 +190,17 @@ function App() {
               <button
                 className={deviceStates.tent === 'closed' ? 'active danger-active' : ''}
                 onClick={() => updateDeviceState('tent', 'closed')}>
-                ⛔ Kapalı
+                ⛔ Durdur
               </button>
               <button
-                className={deviceStates.tent === 'slow' ? 'active primary-active' : ''}
-                onClick={() => updateDeviceState('tent', 'slow')}>
-                🐢 Yavaş
+                className={deviceStates.tent === 'forward' ? 'active primary-active' : ''}
+                onClick={() => updateDeviceState('tent', 'forward')}>
+                🔼 Aç (İleri)
               </button>
               <button
-                className={deviceStates.tent === 'medium' ? 'active primary-active' : ''}
-                onClick={() => updateDeviceState('tent', 'medium')}>
-                🚶 Orta
-              </button>
-              <button
-                className={deviceStates.tent === 'fast' ? 'active primary-active' : ''}
-                onClick={() => updateDeviceState('tent', 'fast')}>
-                🚀 Hızlı
+                className={deviceStates.tent === 'backward' ? 'active primary-active' : ''}
+                onClick={() => updateDeviceState('tent', 'backward')}>
+                🔽 Kapat (Geri)
               </button>
             </div>
           </div>

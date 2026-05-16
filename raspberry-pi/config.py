@@ -57,10 +57,12 @@ TENT_STEP_PINS = [5, 6, 13, 19]  # IN1, IN2, IN3, IN4
 # Tente Motor Hız Değerleri (Adım bekleme süresi saniye cinsinden)
 # NOT: 28BYJ-48 redüktörlüdür. 0.0008 (0.8ms) altı değerlerde motor yetişemeyip titremeye başlar.
 TENT_SPEEDS = {
-    "closed": 0,
-    "slow":   0.004,   # 4 ms
-    "medium": 0.002,   # 2 ms
-    "fast":   0.0008,  # 0.8 ms (Fiziksel maksimum sınır)
+    "closed":   0,
+    "forward":  0.001,  # Aç (İleri) hızı
+    "backward": 0.001,  # Kapat (Geri) hızı
+    "slow":     0.004,  # Eskiler (uyumluluk için)
+    "medium":   0.002,
+    "fast":     0.0008,
 }
 
 # Sıcaklık Sensörleri (DHT11)
