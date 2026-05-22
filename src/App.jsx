@@ -5,7 +5,8 @@ const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:3000';
 function App() {
   const [deviceStates, setDeviceStates] = useState({
     tent: 'closed',
-    heater: 'off',
+    heater_1: 'off',
+    heater_2: 'off',
     fan_1: 'off',
     fan_2: 'off',
     door_light: '0',
@@ -218,14 +219,21 @@ function App() {
         <div className="card">
           <div className="card-header">
             <h2>🔥 Isıtma Sistemi</h2>
-            <div className={`status-indicator ${deviceStates.heater === 'on' ? 'badge-danger' : 'badge-ok'}`}>
-              <div className={`status-dot ${deviceStates.heater === 'on' ? 'active' : 'inactive'}`}></div>
-              {deviceStates.heater === 'on' ? 'Isıtıcı Açık' : 'Isıtıcı Kapalı'}
+            <div className={`status-indicator ${(deviceStates.heater_1 === 'on' || deviceStates.heater_2 === 'on') ? 'badge-danger' : 'badge-ok'}`}>
+              <div className={`status-dot ${(deviceStates.heater_1 === 'on' || deviceStates.heater_2 === 'on') ? 'active' : 'inactive'}`}></div>
+              {deviceStates.heater_1 === 'on' && deviceStates.heater_2 === 'on'
+                ? 'Her İki Isıtıcı Açık'
+                : deviceStates.heater_1 === 'on'
+                  ? 'Salon Isıtıcı Açık'
+                  : deviceStates.heater_2 === 'on'
+                    ? 'Yatak Odası Isıtıcı Açık'
+                    : 'Isıtıcılar Kapalı'}
             </div>
           </div>
           <div className="card-content">
-            <div className="temp-grid">
-              <div className="temp-card">
+            {/* Salon */}
+            <div className="heater-room-block">
+              <div className="temp-card" style={{ marginBottom: '0.75rem' }}>
                 <span className="temp-label">🛋️ Salon</span>
                 <span className="temp-val">
                   {isPiConnected && deviceStates.room_1_temp ? (
@@ -241,7 +249,19 @@ function App() {
                 </span>
                 <span className="temp-src">DS18B20 Sensör</span>
               </div>
-              <div className="temp-card">
+              <button
+                className={`primary-action ${deviceStates.heater_1 === 'on' ? 'danger-action' : ''}`}
+                style={{ width: '100%' }}
+                onClick={() => updateDeviceState('heater_1', deviceStates.heater_1 === 'on' ? 'off' : 'on')}>
+                {deviceStates.heater_1 === 'on' ? '🔥 Salon Isıtıcıyı Kapat' : '❄️ Salon Isıtıcıyı Aç'}
+              </button>
+            </div>
+
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '1rem 0' }}></div>
+
+            {/* Yatak Odası */}
+            <div className="heater-room-block">
+              <div className="temp-card" style={{ marginBottom: '0.75rem' }}>
                 <span className="temp-label">🛏️ Yatak Odası</span>
                 <span className="temp-val">
                   {isPiConnected && deviceStates.room_2_temp ? (
@@ -257,13 +277,13 @@ function App() {
                 </span>
                 <span className="temp-src">DS18B20 Sensör</span>
               </div>
+              <button
+                className={`primary-action ${deviceStates.heater_2 === 'on' ? 'danger-action' : ''}`}
+                style={{ width: '100%' }}
+                onClick={() => updateDeviceState('heater_2', deviceStates.heater_2 === 'on' ? 'off' : 'on')}>
+                {deviceStates.heater_2 === 'on' ? '🔥 Yatak Odası Isıtıcıyı Kapat' : '❄️ Yatak Odası Isıtıcıyı Aç'}
+              </button>
             </div>
-            <p className="label-text" style={{ marginTop: '0.5rem' }}>Merkezi Şerit Isıtıcı (Her İki Oda)</p>
-            <button
-              className={`primary-action ${deviceStates.heater === 'on' ? 'danger-action' : ''}`}
-              onClick={() => updateDeviceState('heater', deviceStates.heater === 'on' ? 'off' : 'on')}>
-              {deviceStates.heater === 'on' ? '🔥 Isıtıcıyı Kapat' : '❄️ Isıtıcıyı Aç'}
-            </button>
           </div>
         </div>
 

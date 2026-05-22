@@ -37,7 +37,8 @@ const memoryStore = {};
 
 const DEFAULT_STATE = {
   tent:              'closed',
-  heater:            'off',
+  heater_1:          'off',
+  heater_2:          'off',
   fan_1:             'off',
   fan_2:             'off',
   door_light:        '0',

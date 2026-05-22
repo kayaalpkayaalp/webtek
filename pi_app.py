@@ -8,7 +8,8 @@ API_URL = "https://webtek-alpha.vercel.app/api"
 # GPIO PIN TANIMLAMALARI (Örnek)
 FAN_1_PIN = 17
 FAN_2_PIN = 27
-HEATER_PIN = 22
+HEATER_1_PIN = 22
+HEATER_2_PIN = 23
 LIGHT_PWM_PIN = 18
 
 def setup_gpio():
@@ -16,7 +17,8 @@ def setup_gpio():
     # GPIO.setmode(GPIO.BCM)
     # GPIO.setup(FAN_1_PIN, GPIO.OUT)
     # GPIO.setup(FAN_2_PIN, GPIO.OUT)
-    # GPIO.setup(HEATER_PIN, GPIO.OUT)
+    # GPIO.setup(HEATER_1_PIN, GPIO.OUT)
+    # GPIO.setup(HEATER_2_PIN, GPIO.OUT)
     # GPIO.setup(LIGHT_PWM_PIN, GPIO.OUT)
     
     # Global yap ki diğer fonksiyonlardan pwn ayarlayabilelim
@@ -41,13 +43,21 @@ def update_pi_hardware(state):
         # GPIO.output(FAN_1_PIN, GPIO.HIGH)
         # PWM kullanarak hız ayarı da yapılabilir.
     
-    # 2. ISITICI KONTROLÜ
-    if state.get("heater") == "on":
-        print("Isıtıcı: AÇIK")
-        # GPIO.output(HEATER_PIN, GPIO.HIGH)
+    # 2. ISITICI KONTROLÜ (Salon)
+    if state.get("heater_1") == "on":
+        print("Salon Isıtıcı: AÇIK")
+        # GPIO.output(HEATER_1_PIN, GPIO.HIGH)
     else:
-        print("Isıtıcı: KAPALI")
-        # GPIO.output(HEATER_PIN, GPIO.LOW)
+        print("Salon Isıtıcı: KAPALI")
+        # GPIO.output(HEATER_1_PIN, GPIO.LOW)
+
+    # 3. ISITICI KONTROLÜ (Yatak Odası)
+    if state.get("heater_2") == "on":
+        print("Yatak Odası Isıtıcı: AÇIK")
+        # GPIO.output(HEATER_2_PIN, GPIO.HIGH)
+    else:
+        print("Yatak Odası Isıtıcı: KAPALI")
+        # GPIO.output(HEATER_2_PIN, GPIO.LOW)
         
     # 3. KAPI AYDINLATMASI (PWM - 0 ile 100 arası)
     light_intensity = int(state.get("door_light", 0))
