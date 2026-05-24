@@ -38,6 +38,8 @@ _bulb_pwm  = None
 # Stepper Motor Global Durumları
 _tent_state = "closed"
 _tent_thread = None
+_tent_position = 0          # Mevcut pozisyon (adım sayısı)
+MAX_TENT_STEPS = 2048       # 180 derece için maksimum adım (28BYJ-48 Half-Step)
 
 # ULN2003 Half-Step (8 Adım) Dizilimi
 _STEP_SEQ = [
@@ -53,11 +55,12 @@ _STEP_SEQ = [
 
 def _stepper_worker():
     """Tente step motorunu arkaplanda döndüren iş parçacığı"""
+    global _tent_position
     step_index = 0
     while True:
         state = _tent_state
         if state == "closed" or not HARDWARE_AVAILABLE:
-            # Kapalıysa motoru serbest bırak (ısınmaması için akımı kes)
+            # Kapalıysa veya limitlerde duruyorsa motoru serbest bırak (ısınmaması için akımı kes)
             if HARDWARE_AVAILABLE:
                 for pin in TENT_STEP_PINS:
                     GPIO.output(pin, GPIO.LOW)
@@ -65,13 +68,31 @@ def _stepper_worker():
             continue
             
         delay = TENT_SPEEDS.get(state, 0.002)
-        direction = -1 if "backward" in state else 1
+        direction = 1 if "forward" in state else -1
+        
+        # ── 180 Derece (2048 adım) Sınır Kontrolü ──
+        if direction == 1 and _tent_position >= MAX_TENT_STEPS:
+            # İleri yönde maksimuma ulaşıldı, motoru durdur
+            if HARDWARE_AVAILABLE:
+                for pin in TENT_STEP_PINS:
+                    GPIO.output(pin, GPIO.LOW)
+            time.sleep(0.1)
+            continue
+            
+        if direction == -1 and _tent_position <= 0:
+            # Geri yönde sıfıra ulaşıldı, motoru durdur
+            if HARDWARE_AVAILABLE:
+                for pin in TENT_STEP_PINS:
+                    GPIO.output(pin, GPIO.LOW)
+            time.sleep(0.1)
+            continue
         
         # Bir adım at
         for pin_idx in range(4):
             GPIO.output(TENT_STEP_PINS[pin_idx], _STEP_SEQ[step_index][pin_idx])
             
         step_index = (step_index + direction) % 8
+        _tent_position += direction  # Pozisyonu güncelle
         time.sleep(delay)
 
 
