@@ -740,3 +740,145 @@ input[type=email]::placeholder {
   margin: 0.25rem 0;
 }
 
+/* =============================================
+   AMBIENT LIGHT (BH1750) SECTION
+============================================= */
+.ambient-light-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.lux-display {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--btn-radius);
+  padding: 1.25rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: background 0.2s;
+}
+
+.lux-display:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.lux-value-wrapper {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.lux-value {
+  font-size: 2.75rem;
+  font-weight: 800;
+  transition: color 0.5s ease;
+  line-height: 1;
+}
+
+.lux-unit {
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lux-description {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: color 0.5s ease;
+}
+
+/* Lux Level Bar */
+.lux-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.lux-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.lux-bar {
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+.lux-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease, background 0.6s ease;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+}
+
+/* =============================================
+   BULB BRIGHTNESS CONTROL
+============================================= */
+.bulb-control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bulb-slider::-webkit-slider-thumb {
+  border-color: #fbbf24 !important;
+}
+
+.bulb-visualizer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.bulb-icon-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 60px;
+}
+
+.bulb-icon {
+  font-size: 2.2rem;
+  transition: all 0.3s ease;
+  line-height: 1;
+}
+
+.bulb-status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.bulb-bar {
+  flex: 1;
+  height: 32px;
+  border-radius: var(--btn-radius);
+  background: rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bulb-bar-fill {
+  height: 100%;
+  border-radius: var(--btn-radius);
+  transition: width 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}

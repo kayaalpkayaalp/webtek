@@ -50,6 +50,8 @@ const DEFAULT_STATE = {
   pi_connected:      'false',
   pi_last_seen:      '0',
   capture_requested: 'false',
+  ambient_light:     '',
+  bulb_brightness:   '0',
 };
 
 // KV'den veya bellekten tüm durumu oku

@@ -11,6 +11,10 @@ FAN_2_PIN = 27
 HEATER_1_PIN = 22
 HEATER_2_PIN = 23
 LIGHT_PWM_PIN = 18
+BULB_PWM_PIN = 25  # Ampul parlaklık kontrolü (PWM)
+
+# BH1750 I2C Adresi
+BH1750_ADDR = 0x23
 
 def setup_gpio():
     print("GPIO PIN ayarları yapılıyor...")
@@ -30,6 +34,17 @@ def read_temperature_sensor():
     # Burada DHT11 veya LM35 sıcaklık sensöründen okuma yapılır.
     # Şimdilik örnek / rastgele değer dönüyoruz:
     return 24, 23  # room_1_temp, room_2_temp
+
+def read_bh1750_light():
+    """BH1750 ışık sensöründen ortam ışık seviyesini oku (lux cinsinden)."""
+    # import smbus2
+    # bus = smbus2.SMBus(1)
+    # data = bus.read_i2c_block_data(BH1750_ADDR, 0x10, 2)  # Continuous H-Res Mode
+    # lux = (data[0] << 8 | data[1]) / 1.2
+    # return round(lux, 1)
+    
+    # Şimdilik örnek değer dönüyoruz:
+    return 350  # lux
 
 def update_pi_hardware(state):
     print("--- Gelen API Verilerine Göre Donanım Güncelleniyor ---")
@@ -64,6 +79,11 @@ def update_pi_hardware(state):
     print(f"Kapı Işığı Şiddeti: %{light_intensity}")
     # light_pwm.ChangeDutyCycle(light_intensity)
 
+    # 4. AMPUL PARLAKLIK KONTROLÜ (PWM - 0 ile 100 arası)
+    bulb_val = int(state.get("bulb_brightness", 0))
+    print(f"Ampul Parlaklığı: %{bulb_val}")
+    # bulb_pwm.ChangeDutyCycle(bulb_val)
+
 def main_loop():
     setup_gpio()
     
@@ -82,6 +102,7 @@ def main_loop():
             # 2. RASPBERRY PI'DAKI SENSÖR BİLGİLERİNİ WEB'E GÖNDER (POST)
             # Örneğin sıcaklık sensörünü okup arayüze güncel halini yollayalım:
             room_1, room_2 = read_temperature_sensor()
+            ambient_lux = read_bh1750_light()
             
             # Not: Eğer değer webdeki (current_state'teki) değerden farklıysa güncelle ki 
             # sürekli aynı datayı post etmesin, gereksiz API yorulmasın.
@@ -90,6 +111,10 @@ def main_loop():
                 
             if int(current_state.get('room_2_temp', 0)) != room_2:
                 requests.post(f"{API_URL}/update", json={"device_name": "room_2_temp", "state_value": room_2})
+            
+            # BH1750 ortam ışık sensörü verisini gönder
+            if float(current_state.get('ambient_light', 0)) != ambient_lux:
+                requests.post(f"{API_URL}/update", json={"device_name": "ambient_light", "state_value": ambient_lux})
                 
         except requests.exceptions.RequestException as e:
             print(f"Uyarı: API ile bağlantı kurulamadı. Hata: {e}")

@@ -15,6 +15,8 @@ function App() {
     rain_status: 'dry',
     last_photo: '',
     pi_connected: 'false',
+    ambient_light: '',
+    bulb_brightness: '0',
   });
   const [email, setEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState('');
@@ -23,6 +25,7 @@ function App() {
   const [photoBase64, setPhotoBase64] = useState(null);
   const prevRainRef = useRef('dry');
   const isDraggingLightRef = useRef(false);
+  const isDraggingBulbRef = useRef(false);
 
   // ---- Durum verilerini 3 saniyede bir çek ----
   useEffect(() => {
@@ -44,6 +47,9 @@ function App() {
               // Kullanıcı kaydırıcıyı sürüklüyorsa, sunucudan gelen ışık değerini yoksay (zıplamayı önle)
               if (isDraggingLightRef.current) {
                 delete newData.door_light;
+              }
+              if (isDraggingBulbRef.current) {
+                delete newData.bulb_brightness;
               }
 
               return { ...prev, ...newData };
@@ -145,6 +151,19 @@ function App() {
   const isRaining = deviceStates.rain_status === 'raining';
   const isPiConnected = deviceStates.pi_connected === 'true';
   const lightPct = parseInt(deviceStates.door_light) || 0;
+  const bulbPct = parseInt(deviceStates.bulb_brightness) || 0;
+  const ambientLux = deviceStates.ambient_light ? parseFloat(deviceStates.ambient_light) : null;
+
+  // Lux seviyesine göre açıklama ve renk
+  const getLuxInfo = (lux) => {
+    if (lux === null) return { label: 'Veri Yok', color: '#94a3b8', level: 0 };
+    if (lux < 50) return { label: 'Çok Karanlık', color: '#6366f1', level: 1 };
+    if (lux < 200) return { label: 'Loş', color: '#8b5cf6', level: 2 };
+    if (lux < 500) return { label: 'Normal', color: '#f59e0b', level: 3 };
+    if (lux < 1000) return { label: 'Aydınlık', color: '#fb923c', level: 4 };
+    return { label: 'Çok Parlak', color: '#fbbf24', level: 5 };
+  };
+  const luxInfo = getLuxInfo(ambientLux);
 
   return (
     <>
@@ -352,6 +371,104 @@ function App() {
             <div className="light-visualizer">
               <div className="light-fill" style={{ width: !isPiConnected ? '0%' : `${lightPct}%`, background: !isPiConnected ? '#475569' : '' }}>
                 {isPiConnected && lightPct > 20 && <span className="light-label">💡 {lightPct}%</span>}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* =================== 5. Ortam Işığı & Ampul =================== */}
+        <div className="card">
+          <div className="card-header">
+            <h2>🔆 Aydınlatma Kontrolü</h2>
+            <div className="status-indicator" style={
+              !isPiConnected ? { background: '#1e293b', borderColor: '#334155', color: '#94a3b8' } :
+              {
+                background: `rgba(${luxInfo.level >= 3 ? '251, 191, 36' : '99, 102, 241'}, ${0.1 + luxInfo.level * 0.05})`,
+                borderColor: `rgba(${luxInfo.level >= 3 ? '251, 191, 36' : '99, 102, 241'}, 0.4)`
+              }
+            }>
+              {!isPiConnected ? 'Veri Yok' : luxInfo.label}
+            </div>
+          </div>
+          <div className="card-content">
+            {/* BH1750 Ortam Işık Sensörü */}
+            <div className="ambient-light-section">
+              <p className="label-text">☀️ Ortam Işık Seviyesi — BH1750 Sensör</p>
+              <div className="lux-display">
+                <div className="lux-value-wrapper">
+                  <span className="lux-value" style={{ color: luxInfo.color }}>
+                    {isPiConnected && ambientLux !== null ? ambientLux : '—'}
+                  </span>
+                  <span className="lux-unit">lux</span>
+                </div>
+                <span className="lux-description" style={{ color: luxInfo.color }}>
+                  {isPiConnected ? luxInfo.label : 'Pi Bağlı Değil'}
+                </span>
+              </div>
+              {/* Lux seviye barı */}
+              <div className="lux-bar-container">
+                <div className="lux-bar-labels">
+                  <span>🌙</span>
+                  <span>☀️</span>
+                </div>
+                <div className="lux-bar">
+                  <div className="lux-bar-fill" style={{
+                    width: isPiConnected && ambientLux !== null
+                      ? `${Math.min((ambientLux / 2000) * 100, 100)}%`
+                      : '0%',
+                    background: isPiConnected
+                      ? `linear-gradient(90deg, #6366f1, #8b5cf6, #f59e0b, #fbbf24)`
+                      : '#475569'
+                  }}></div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.5rem 0' }}></div>
+
+            {/* Ampul Parlaklık Kontrolü */}
+            <div className="bulb-control-section">
+              <p className="label-text">💡 Ampul Parlaklık Kontrolü — PWM</p>
+              <div className="slider-container">
+                <div className="slider-labels">
+                  <span>Kapalı</span>
+                  <span style={{ color: bulbPct > 0 ? '#fbbf24' : 'var(--text-muted)', fontWeight: '700' }}>%{bulbPct}</span>
+                  <span>Tam</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={bulbPct}
+                  className="bulb-slider"
+                  onPointerDown={() => { isDraggingBulbRef.current = true; }}
+                  onChange={(e) => setDeviceStates(prev => ({ ...prev, bulb_brightness: e.target.value }))}
+                  onPointerUp={(e) => {
+                    isDraggingBulbRef.current = false;
+                    updateDeviceState('bulb_brightness', e.target.value);
+                  }}
+                />
+              </div>
+              <div className="bulb-visualizer">
+                <div className="bulb-icon-wrapper">
+                  <span className="bulb-icon" style={{
+                    filter: `brightness(${0.3 + (bulbPct / 100) * 1.5})`,
+                    opacity: bulbPct > 0 ? 1 : 0.3,
+                    textShadow: bulbPct > 50 ? `0 0 ${bulbPct / 3}px rgba(251, 191, 36, 0.8)` : 'none'
+                  }}>💡</span>
+                  <span className="bulb-status">
+                    {bulbPct === 0 ? 'Kapalı' : bulbPct < 30 ? 'Kısık' : bulbPct < 70 ? 'Orta' : 'Tam Güç'}
+                  </span>
+                </div>
+                <div className="bulb-bar">
+                  <div className="bulb-bar-fill" style={{
+                    width: `${bulbPct}%`,
+                    background: bulbPct > 0
+                      ? `linear-gradient(90deg, rgba(251, 191, 36, 0.3), rgba(251, 191, 36, 0.9))`
+                      : '#475569',
+                    boxShadow: bulbPct > 20 ? `0 0 ${bulbPct / 5}px rgba(251, 191, 36, 0.5)` : 'none'
+                  }}></div>
+                </div>
               </div>
             </div>
           </div>
