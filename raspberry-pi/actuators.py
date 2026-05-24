@@ -117,9 +117,13 @@ def setup_gpio():
     _light_pwm.start(0)
 
     # Ampul parlaklık PWM
-    GPIO.setup(BULB_PWM_PIN, GPIO.OUT)
-    _bulb_pwm = GPIO.PWM(BULB_PWM_PIN, BULB_PWM_FREQ)
-    _bulb_pwm.start(0)
+    if BULB_PWM_PIN == DOOR_LIGHT_PWM_PIN:
+        # Aynı pin — PWM nesnesini paylaş
+        _bulb_pwm = _light_pwm
+    else:
+        GPIO.setup(BULB_PWM_PIN, GPIO.OUT)
+        _bulb_pwm = GPIO.PWM(BULB_PWM_PIN, BULB_PWM_FREQ)
+        _bulb_pwm.start(0)
 
     log.info("✅ GPIO kurulumu tamamlandı.")
 

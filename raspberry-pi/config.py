@@ -83,6 +83,6 @@ BH1750_I2C_BUS  = 1       # Raspberry Pi I2C bus numarası
 BH1750_ADDR     = 0x23    # ADDR pini GND'ye bağlıysa 0x23, VCC'ye bağlıysa 0x5C
 BH1750_CMD      = 0x10    # Sürekli yüksek çözünürlük modu (1 lux hassasiyet)
 
-# Ampul Parlaklık Kontrolü (PWM)
-BULB_PWM_PIN  = 12   # GPIO 12 (Hardware PWM destekli)
+# Ampul Parlaklık Kontrolü (PWM — MOSFET üzerinden GPIO17)
+BULB_PWM_PIN  = 17   # GPIO 17 → MOSFET PWM → Ampul
 BULB_PWM_FREQ = 100  # Hz
