@@ -20,7 +20,7 @@ import time
 import threading
 import logging
 from config import API_URL, POLL_INTERVAL
-from sensors import read_temperatures, read_rain_sensor, setup_sensor_gpio
+from sensors import read_temperatures, read_rain_sensor, setup_sensor_gpio, read_bh1750_light
 from actuators import (
     setup_gpio,
     cleanup_gpio,
@@ -28,6 +28,7 @@ from actuators import (
     apply_heater_state,
     apply_tent_state,
     apply_door_light,
+    apply_bulb_brightness,
 )
 from camera import capture_and_upload
 import requests
@@ -87,6 +88,7 @@ def poll_loop():
             apply_heater_state(state.get("heater", "off"))
             apply_tent_state(state.get("tent", "closed"))
             apply_door_light(int(state.get("door_light", 0)))
+            apply_bulb_brightness(int(state.get("bulb_brightness", 0)))
 
             # ── 3. Fotoğraf çekme isteği varsa tetikle ───────────
             if state.get("capture_requested") == "true":
@@ -129,6 +131,19 @@ def poll_loop():
                     log.info("☀️  Yağmur durdu.")
 
             last_state = state
+
+            # ── 6. BH1750 Işık Sensörünü Oku ───────────────────────
+            ambient_lux = read_bh1750_light()
+
+            if ambient_lux is not None:
+                lux_str = str(ambient_lux)
+                if lux_str != str(state.get("ambient_light", "")):
+                    update_api("ambient_light", lux_str)
+                    log.info(f"☀️  Ortam ışığı: {ambient_lux} lux (BH1750)")
+            else:
+                # Sensör bağlı değilse web'den temizle
+                if state.get("ambient_light", "") != "":
+                    update_api("ambient_light", "")
 
         except requests.exceptions.RequestException as e:
             log.error(f"❌ API bağlantı hatası: {e}")

@@ -2,6 +2,7 @@
 sensors.py — Sensör Okuma Modülü
 ==================================
 - DS18B20 (1-Wire) sıcaklık sensörü okuma (GPIO 4 üzerinde 1 veya 2 sensör)
+- BH1750 (I2C) ortam ışık sensörü okuma (SDA/SCL)
 - Yağmur sensörü okuma (dijital)
 - PIR hareket sensörü okuma
 
@@ -26,7 +27,18 @@ except ImportError:
 from config import (
     RAIN_SENSOR_PIN,
     RAIN_ACTIVE_LOW,
+    BH1750_I2C_BUS,
+    BH1750_ADDR,
+    BH1750_CMD,
 )
+
+# ── I2C İmport'u (BH1750 için) ───────────────────────────────────────────────
+try:
+    import smbus2
+    I2C_AVAILABLE = True
+except ImportError:
+    I2C_AVAILABLE = False
+    log.warning("⚠️  smbus2 bulunamadı. BH1750 ışık sensörü okunamayacak. → pip install smbus2")
 
 
 # ── 1-Wire (DS18B20) Okuma — GPIO 4 ─────────────────────────────────────────
@@ -99,6 +111,45 @@ def read_temperatures() -> tuple:
         read_temperatures._prev_count = current_count
 
     return t1, t2
+
+
+# ── BH1750 Işık Sensörü (I2C — SDA/SCL) ─────────────────────────────────────
+def read_bh1750_light():
+    """
+    BH1750 ışık sensöründen ortam ışık seviyesini oku (lux cinsinden).
+
+    Bağlantı:
+      - VCC  → 3.3V (Pin 1)
+      - GND  → GND  (Pin 6)
+      - SDA  → GPIO2 (Pin 3)
+      - SCL  → GPIO3 (Pin 5)
+      - ADDR → GND   (adres 0x23 için)
+
+    Döndürür: float (lux) veya None (sensör yoksa/hata)
+    """
+    if not I2C_AVAILABLE:
+        return None
+
+    try:
+        bus = smbus2.SMBus(BH1750_I2C_BUS)
+        bus.write_byte(BH1750_ADDR, BH1750_CMD)
+        time.sleep(0.18)  # Ölçüm için 180ms bekle
+        data = bus.read_i2c_block_data(BH1750_ADDR, BH1750_CMD, 2)
+        bus.close()
+        lux = round((data[0] << 8 | data[1]) / 1.2, 1)
+
+        if not hasattr(read_bh1750_light, "_logged"):
+            log.info(f"✅ BH1750 ışık sensörü algılandı (I2C: 0x{BH1750_ADDR:02X})")
+            read_bh1750_light._logged = True
+
+        return lux
+    except Exception as e:
+        if not hasattr(read_bh1750_light, "_err_logged"):
+            log.warning(f"⚠️  BH1750 sensör okunamadı: {e}")
+            log.warning("   → Bağlantıyı kontrol edin: SDA → GPIO2, SCL → GPIO3")
+            log.warning("   → raspi-config → Interface Options → I2C → Enable")
+            read_bh1750_light._err_logged = True
+        return None
 
 
 def read_rain_sensor() -> str:

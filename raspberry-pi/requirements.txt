@@ -22,3 +22,6 @@ RPi.GPIO>=0.7.0
 # PCA9685 PWM/Servo Sürücü Kartı için:
 adafruit-circuitpython-pca9685>=2.3.0
 
+# BH1750 Işık Sensörü (I2C haberleşmesi için)
+smbus2>=0.4.0
+

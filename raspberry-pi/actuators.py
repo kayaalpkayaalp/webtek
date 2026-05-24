@@ -28,12 +28,14 @@ from config import (
     HEATER_PIN,
     DOOR_LIGHT_PWM_PIN, DOOR_LIGHT_FREQ,
     TENT_STEP_PINS, TENT_SPEEDS,
+    BULB_PWM_PIN, BULB_PWM_FREQ,
 )
 
 # ── PWM ve Durum Nesneleri ────────────────────────────────────────────────────
 _light_pwm = None
 _fan1_pwm  = None
 _fan2_pwm  = None
+_bulb_pwm  = None
 
 # Stepper Motor Global Durumları
 _tent_state = "closed"
@@ -77,7 +79,7 @@ def _stepper_worker():
 
 def setup_gpio():
     """GPIO pinlerini başlat."""
-    global _light_pwm, _fan1_pwm, _fan2_pwm, _tent_thread
+    global _light_pwm, _fan1_pwm, _fan2_pwm, _tent_thread, _bulb_pwm
 
     if not HARDWARE_AVAILABLE:
         log.info("[SIM] GPIO ayarları yapıldı (simülasyon)")
@@ -114,6 +116,11 @@ def setup_gpio():
     _light_pwm = GPIO.PWM(DOOR_LIGHT_PWM_PIN, DOOR_LIGHT_FREQ)
     _light_pwm.start(0)
 
+    # Ampul parlaklık PWM
+    GPIO.setup(BULB_PWM_PIN, GPIO.OUT)
+    _bulb_pwm = GPIO.PWM(BULB_PWM_PIN, BULB_PWM_FREQ)
+    _bulb_pwm.start(0)
+
     log.info("✅ GPIO kurulumu tamamlandı.")
 
 
@@ -125,6 +132,7 @@ def cleanup_gpio():
         if _light_pwm: _light_pwm.stop()
         if _fan1_pwm:  _fan1_pwm.stop()
         if _fan2_pwm:  _fan2_pwm.stop()
+        if _bulb_pwm:  _bulb_pwm.stop()
         
         for pin in TENT_STEP_PINS:
             GPIO.output(pin, GPIO.LOW)
@@ -188,3 +196,19 @@ def apply_door_light(intensity: int):
 
         if HARDWARE_AVAILABLE:
             _light_pwm.ChangeDutyCycle(intensity)
+
+
+# ── Ampul Parlaklık PWM ───────────────────────────────────────────────────────
+def apply_bulb_brightness(intensity: int):
+    """
+    intensity: 0-100 arası parlaklık değeri
+    """
+    intensity = max(0, min(100, intensity))
+
+    if _last_states.get("bulb") != intensity:
+        status = "KAPALI" if intensity == 0 else f"%{intensity}"
+        log.info(f"💡 Ampul Parlaklığı: {status}")
+        _last_states["bulb"] = intensity
+
+        if HARDWARE_AVAILABLE:
+            _bulb_pwm.ChangeDutyCycle(intensity)

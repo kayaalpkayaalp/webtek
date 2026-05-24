@@ -77,3 +77,12 @@ RAIN_ACTIVE_LOW = True  # Çoğu modül LOW geldiğinde algılar
 
 # PIR Hareket Sensörü (Kapı kamerası tetikleyici)
 PIR_PIN = 16
+
+# BH1750 Işık Sensörü (I2C — SDA: GPIO2/Pin3, SCL: GPIO3/Pin5)
+BH1750_I2C_BUS  = 1       # Raspberry Pi I2C bus numarası
+BH1750_ADDR     = 0x23    # ADDR pini GND'ye bağlıysa 0x23, VCC'ye bağlıysa 0x5C
+BH1750_CMD      = 0x10    # Sürekli yüksek çözünürlük modu (1 lux hassasiyet)
+
+# Ampul Parlaklık Kontrolü (PWM)
+BULB_PWM_PIN  = 12   # GPIO 12 (Hardware PWM destekli)
+BULB_PWM_FREQ = 100  # Hz
