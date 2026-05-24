@@ -25,7 +25,7 @@ except ImportError:
 
 from config import (
     FAN_1_PIN, FAN_2_PIN, FAN_SPEEDS,
-    HEATER_PIN,
+    HEATER_1_PIN, HEATER_2_PIN,
     TENT_STEP_PINS, TENT_SPEEDS,
     BULB_PWM_PIN, BULB_PWM_FREQ,
 )
@@ -86,8 +86,9 @@ def setup_gpio():
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
 
-    # Isıtıcı rölesi (başlangıçta HIGH = kapalı)
-    GPIO.setup(HEATER_PIN, GPIO.OUT, initial=GPIO.HIGH)
+    # Isıtıcı MOSFET'leri (başlangıçta LOW = kapalı, MOSFET tetiklenmez)
+    GPIO.setup(HEATER_1_PIN, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(HEATER_2_PIN, GPIO.OUT, initial=GPIO.LOW)
 
     # Fan pinleri (PWM MOSFET için doğrudan GPIO)
     GPIO.setup(FAN_1_PIN, GPIO.OUT)
@@ -154,16 +155,19 @@ def apply_fan_state(fan_number: int, state: str):
             pwm_obj.ChangeDutyCycle(duty)
 
 
-# ── Isıtıcı Kontrolü ──────────────────────────────────────────────────────────
-def apply_heater_state(state: str):
+# ── Isıtıcı Kontrolü (MOSFET) ──────────────────────────────────────────────────
+def apply_heater_state(heater_number: int, state: str):
     on = (state == "on")
+    key = f"heater_{heater_number}"
+    pin = HEATER_1_PIN if heater_number == 1 else HEATER_2_PIN
 
-    if _last_states.get("heater") != state:
-        log.info(f"🔥 Isıtıcı: {'AÇIK' if on else 'KAPALI'}")
-        _last_states["heater"] = state
+    if _last_states.get(key) != state:
+        log.info(f"🔥 Isıtıcı {heater_number}: {'AÇIK' if on else 'KAPALI'}")
+        _last_states[key] = state
 
         if HARDWARE_AVAILABLE:
-            GPIO.output(HEATER_PIN, GPIO.LOW if on else GPIO.HIGH)
+            # MOSFET kontrolü: HIGH = Açık, LOW = Kapalı
+            GPIO.output(pin, GPIO.HIGH if on else GPIO.LOW)
 
 
 # ── Tente Motor Kontrolü (ULN2003 Stepper) ────────────────────────────────────

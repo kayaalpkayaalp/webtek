@@ -44,8 +44,9 @@ FAN_SPEEDS = {
     "fast":   100,
 }
 
-# Isıtıcı Rölesi
-HEATER_PIN  = 22
+# Isıtıcı (MOSFET)
+HEATER_1_PIN  = 22   # Salon Isıtıcı
+HEATER_2_PIN  = 23   # Yatak Odası Isıtıcı
 
 # Kapı Lambası (Kaldırıldı)
 # Tente Motor Sürücü (ULN2003 Stepper Motor)

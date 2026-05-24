@@ -84,7 +84,8 @@ def poll_loop():
             # ── 2. Donanımı Güncelle ──────────────────────────────
             apply_fan_state(1, state.get("fan_1", "off"))
             apply_fan_state(2, state.get("fan_2", "off"))
-            apply_heater_state(state.get("heater", "off"))
+            apply_heater_state(1, state.get("heater_1", "off"))
+            apply_heater_state(2, state.get("heater_2", "off"))
             apply_tent_state(state.get("tent", "closed"))
             apply_bulb_brightness(int(state.get("bulb_brightness", 0)))
 
