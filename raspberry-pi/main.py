@@ -27,7 +27,6 @@ from actuators import (
     apply_fan_state,
     apply_heater_state,
     apply_tent_state,
-    apply_door_light,
     apply_bulb_brightness,
 )
 from camera import capture_and_upload
@@ -87,7 +86,6 @@ def poll_loop():
             apply_fan_state(2, state.get("fan_2", "off"))
             apply_heater_state(state.get("heater", "off"))
             apply_tent_state(state.get("tent", "closed"))
-            apply_door_light(int(state.get("door_light", 0)))
             apply_bulb_brightness(int(state.get("bulb_brightness", 0)))
 
             # ── 3. Fotoğraf çekme isteği varsa tetikle ───────────

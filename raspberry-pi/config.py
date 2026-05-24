@@ -47,10 +47,7 @@ FAN_SPEEDS = {
 # Isıtıcı Rölesi
 HEATER_PIN  = 22
 
-# Kapı Lambası (PWM ile 0-100 parlaklık)
-DOOR_LIGHT_PWM_PIN = 17  # 18 numaralı pini fan için ayırdığımızdan bunu 17'ye aldık.
-DOOR_LIGHT_FREQ    = 100  # Hz
-
+# Kapı Lambası (Kaldırıldı)
 # Tente Motor Sürücü (ULN2003 Stepper Motor)
 TENT_STEP_PINS = [5, 6, 13, 19]  # IN1, IN2, IN3, IN4
 

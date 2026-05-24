@@ -9,7 +9,6 @@ function App() {
     heater_2: 'off',
     fan_1: 'off',
     fan_2: 'off',
-    door_light: '0',
     room_1_temp: '',
     room_2_temp: '',
     rain_status: 'dry',
@@ -24,7 +23,6 @@ function App() {
   const [notification, setNotification] = useState(null);
   const [photoBase64, setPhotoBase64] = useState(null);
   const prevRainRef = useRef('dry');
-  const isDraggingLightRef = useRef(false);
   const isDraggingBulbRef = useRef(false);
 
   // ---- Durum verilerini 3 saniyede bir çek ----
@@ -45,9 +43,6 @@ function App() {
               }
               
               // Kullanıcı kaydırıcıyı sürüklüyorsa, sunucudan gelen ışık değerini yoksay (zıplamayı önle)
-              if (isDraggingLightRef.current) {
-                delete newData.door_light;
-              }
               if (isDraggingBulbRef.current) {
                 delete newData.bulb_brightness;
               }
@@ -150,7 +145,6 @@ function App() {
 
   const isRaining = deviceStates.rain_status === 'raining';
   const isPiConnected = deviceStates.pi_connected === 'true';
-  const lightPct = parseInt(deviceStates.door_light) || 0;
   const bulbPct = parseInt(deviceStates.bulb_brightness) || 0;
   const ambientLux = deviceStates.ambient_light ? parseFloat(deviceStates.ambient_light) : null;
 
@@ -333,48 +327,8 @@ function App() {
           </div>
         </div>
 
-        {/* =================== 4. Kapı Aydınlatma =================== */}
-        <div className="card">
-          <div className="card-header">
-            <h2>💡 Dış Kapı Aydınlatma</h2>
-            <div className="status-indicator" style={
-              !isPiConnected ? { background: '#1e293b', borderColor: '#334155', color: '#94a3b8' } :
-              {
-                background: `rgba(245, 158, 11, ${lightPct / 200 + 0.1})`,
-                borderColor: 'rgba(245, 158, 11, 0.4)'
-              }
-            }>
-              {!isPiConnected ? 'Veri Yok' : `%${lightPct}`}
-            </div>
-          </div>
-          <div className="card-content">
-            <p className="label-text">12V Kapı Lambası — PWM Parlaklık Kontrolü</p>
-            <div className="slider-container">
-              <div className="slider-labels">
-                <span>0%</span>
-                <span style={{ color: 'var(--accent-warning)', fontWeight: '700' }}>%{lightPct}</span>
-                <span>100%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={lightPct}
-                onPointerDown={() => { isDraggingLightRef.current = true; }}
-                onChange={(e) => setDeviceStates(prev => ({ ...prev, door_light: e.target.value }))}
-                onPointerUp={(e) => {
-                  isDraggingLightRef.current = false;
-                  updateDeviceState('door_light', e.target.value);
-                }}
-              />
-            </div>
-            <div className="light-visualizer">
-              <div className="light-fill" style={{ width: !isPiConnected ? '0%' : `${lightPct}%`, background: !isPiConnected ? '#475569' : '' }}>
-                {isPiConnected && lightPct > 20 && <span className="light-label">💡 {lightPct}%</span>}
-              </div>
-            </div>
-          </div>
-        </div>
+
+
 
         {/* =================== 5. Ortam Işığı & Ampul =================== */}
         <div className="card">

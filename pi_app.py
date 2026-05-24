@@ -91,11 +91,6 @@ def update_pi_hardware(state):
         print("Yatak Odası Isıtıcı: KAPALI")
         # GPIO.output(HEATER_2_PIN, GPIO.LOW)
         
-    # 3. KAPI AYDINLATMASI (PWM - 0 ile 100 arası)
-    light_intensity = int(state.get("door_light", 0))
-    print(f"Kapı Işığı Şiddeti: %{light_intensity}")
-    # light_pwm.ChangeDutyCycle(light_intensity)
-
     # 4. AMPUL PARLAKLIK KONTROLÜ (PWM - 0 ile 100 arası)
     bulb_val = int(state.get("bulb_brightness", 0))
     print(f"Ampul Parlaklığı: %{bulb_val}")

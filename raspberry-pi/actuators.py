@@ -26,13 +26,11 @@ except ImportError:
 from config import (
     FAN_1_PIN, FAN_2_PIN, FAN_SPEEDS,
     HEATER_PIN,
-    DOOR_LIGHT_PWM_PIN, DOOR_LIGHT_FREQ,
     TENT_STEP_PINS, TENT_SPEEDS,
     BULB_PWM_PIN, BULB_PWM_FREQ,
 )
 
 # ── PWM ve Durum Nesneleri ────────────────────────────────────────────────────
-_light_pwm = None
 _fan1_pwm  = None
 _fan2_pwm  = None
 _bulb_pwm  = None
@@ -79,7 +77,7 @@ def _stepper_worker():
 
 def setup_gpio():
     """GPIO pinlerini başlat."""
-    global _light_pwm, _fan1_pwm, _fan2_pwm, _tent_thread, _bulb_pwm
+    global _fan1_pwm, _fan2_pwm, _tent_thread, _bulb_pwm
 
     if not HARDWARE_AVAILABLE:
         log.info("[SIM] GPIO ayarları yapıldı (simülasyon)")
@@ -111,19 +109,10 @@ def setup_gpio():
         _tent_thread.start()
         log.info("✅ ULN2003 Stepper iş parçacığı başlatıldı.")
 
-    # Kapı lambası PWM
-    GPIO.setup(DOOR_LIGHT_PWM_PIN, GPIO.OUT)
-    _light_pwm = GPIO.PWM(DOOR_LIGHT_PWM_PIN, DOOR_LIGHT_FREQ)
-    _light_pwm.start(0)
-
     # Ampul parlaklık PWM
-    if BULB_PWM_PIN == DOOR_LIGHT_PWM_PIN:
-        # Aynı pin — PWM nesnesini paylaş
-        _bulb_pwm = _light_pwm
-    else:
-        GPIO.setup(BULB_PWM_PIN, GPIO.OUT)
-        _bulb_pwm = GPIO.PWM(BULB_PWM_PIN, BULB_PWM_FREQ)
-        _bulb_pwm.start(0)
+    GPIO.setup(BULB_PWM_PIN, GPIO.OUT)
+    _bulb_pwm = GPIO.PWM(BULB_PWM_PIN, BULB_PWM_FREQ)
+    _bulb_pwm.start(0)
 
     log.info("✅ GPIO kurulumu tamamlandı.")
 
@@ -133,7 +122,6 @@ def cleanup_gpio():
     if not HARDWARE_AVAILABLE:
         return
     try:
-        if _light_pwm: _light_pwm.stop()
         if _fan1_pwm:  _fan1_pwm.stop()
         if _fan2_pwm:  _fan2_pwm.stop()
         if _bulb_pwm:  _bulb_pwm.stop()
@@ -185,21 +173,6 @@ def apply_tent_state(state: str):
         log.info(f"🏕️  Tente: {state.upper()} (Stepper mod)")
         _last_states["tent"] = state
         _tent_state = state
-
-
-# ── Kapı Lambası PWM ──────────────────────────────────────────────────────────
-def apply_door_light(intensity: int):
-    """
-    intensity: 0-100 arası parlaklık değeri
-    """
-    intensity = max(0, min(100, intensity))
-
-    if _last_states.get("light") != intensity:
-        log.info(f"💡 Kapı Lambası: %{intensity}")
-        _last_states["light"] = intensity
-
-        if HARDWARE_AVAILABLE:
-            _light_pwm.ChangeDutyCycle(intensity)
 
 
 # ── Ampul Parlaklık PWM ───────────────────────────────────────────────────────

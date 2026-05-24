@@ -41,7 +41,6 @@ const DEFAULT_STATE = {
   heater_2:          'off',
   fan_1:             'off',
   fan_2:             'off',
-  door_light:        '0',
   room_1_temp:       '',
   room_2_temp:       '',
   rain_status:       'dry',
