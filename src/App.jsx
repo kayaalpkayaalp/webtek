@@ -25,6 +25,9 @@ function App() {
   const prevRainRef = useRef('dry');
   const isDraggingBulbRef = useRef(false);
 
+  // Canlı saat (sadece görsel)
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   // ---- Durum verilerini 3 saniyede bir çek ----
   useEffect(() => {
     const fetchStatus = () => {
@@ -57,6 +60,12 @@ function App() {
     fetchStatus();
     const interval = setInterval(fetchStatus, 1500);
     return () => clearInterval(interval);
+  }, []);
+
+  // Saat güncellemesi
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const showNotification = (type, message) => {
@@ -159,6 +168,13 @@ function App() {
   };
   const luxInfo = getLuxInfo(ambientLux);
 
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+  const formatDate = (date) => {
+    return date.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
   return (
     <>
       {/* Bildirim Toast */}
@@ -168,233 +184,240 @@ function App() {
         </div>
       )}
 
-      <header>
-        <div className="header-badges">
-          <div className={`pi-badge ${isPiConnected ? 'connected' : 'disconnected'}`}>
-            <span className="pi-dot"></span>
-            {isPiConnected ? 'Pi Bağlı' : 'Pi Çevrimdışı'}
+      {/* Floating Header */}
+      <header className="app-header">
+        <div className="header-content">
+          <div className="header-brand">
+            <div className="brand-icon">🏠</div>
+            <div>
+              <h1>Akıllı Ev</h1>
+              <p className="header-date">{formatDate(currentTime)}</p>
+            </div>
           </div>
-          <div className={`rain-badge ${!isPiConnected ? 'dry' : (isRaining ? 'raining' : 'dry')}`} style={!isPiConnected ? { opacity: 0.6 } : {}}>
-            {!isPiConnected ? '❓ Veri Yok' : (isRaining ? '🌧️ Yağmur Var' : '☀️ Hava Açık')}
+          <div className="header-clock">{formatTime(currentTime)}</div>
+          <div className="header-status">
+            <div className={`status-pill ${isPiConnected ? 'pill-success' : 'pill-danger'}`}>
+              <span className="pill-dot"></span>
+              {isPiConnected ? 'Pi Bağlı' : 'Pi Çevrimdışı'}
+            </div>
+            <div className={`status-pill ${!isPiConnected ? 'pill-muted' : (isRaining ? 'pill-info' : 'pill-warm')}`}>
+              {!isPiConnected ? '❓ Veri Yok' : (isRaining ? '🌧️ Yağmur' : '☀️ Açık')}
+            </div>
           </div>
         </div>
-        <h1 className="dashboard-title">Akıllı Ev Merkezi</h1>
-        <p className="dashboard-subtitle">Raspberry Pi Kontrol Paneli</p>
       </header>
 
-      <div className="dashboard-grid">
+      <main className="dashboard">
+        <div className="dashboard-grid">
 
-        {/* =================== 1. Hava & Tente =================== */}
-        <div className="card">
-          <div className="card-header">
-            <h2>🏕️ Balkon Tentesi</h2>
-            <div className={`status-indicator ${!isPiConnected ? 'badge-ok' : (isRaining ? 'badge-warn' : 'badge-ok')}`} style={!isPiConnected ? { opacity: 0.6 } : {}}>
-              <div className={`status-dot ${!isPiConnected ? 'safe' : (isRaining ? 'raining' : 'safe')}`} style={!isPiConnected ? { background: '#94a3b8', boxShadow: 'none' } : {}}></div>
-              {!isPiConnected ? 'Veri Yok' : (isRaining ? 'Yağmur!' : 'Hava Kuru')}
-            </div>
-          </div>
-          <div className="card-content">
-            {isRaining && (
-              <div className="auto-banner" style={{background: 'var(--danger)'}}>
-                🌧️ Yağmur yağıyor, tenteyi kapatmayı unutmayın!
+          {/* =================== 1. Balkon Tentesi =================== */}
+          <div className="device-card card-tent" style={{'--card-accent': '#8b5cf6'}}>
+            <div className="card-glow"></div>
+            <div className="card-header">
+              <div className="card-icon-wrap" style={{'--icon-bg': 'rgba(139, 92, 246, 0.15)'}}>🏕️</div>
+              <div className="card-title-area">
+                <h2>Balkon Tentesi</h2>
+                <span className={`mini-badge ${!isPiConnected ? '' : (isRaining ? 'badge-rain' : 'badge-clear')}`}>
+                  {!isPiConnected ? 'Veri Yok' : (isRaining ? '🌧️ Yağmur!' : '☀️ Kuru')}
+                </span>
               </div>
-            )}
-            <p className="label-text">Tente Kontrolü</p>
-            <button
-              className={`primary-action ${deviceStates.tent === 'closed' ? 'standby-action' : 'danger-action animate-pulse'}`}
-              style={{ width: '100%', marginBottom: '15px', transition: 'all 0.3s ease' }}
-              onClick={() => updateDeviceState('tent', 'closed')}>
-              {deviceStates.tent === 'closed' ? '✅ Motor Beklemede' : '⛔ Motoru Durdur'}
-            </button>
-            
-            <div style={{ display: 'flex', gap: '15px' }}>
-              <div style={{ flex: 1 }}>
-                <p className="label-text" style={{ textAlign: 'center' }}>🔼 Aç (İleri)</p>
-                <div className="button-group" style={{ flexDirection: 'column', gap: '5px' }}>
-                  <button className={deviceStates.tent === 'forward_slow' ? 'active primary-active' : ''} onClick={() => updateDeviceState('tent', 'forward_slow')}>🐢 Yavaş</button>
-                  <button className={deviceStates.tent === 'forward_medium' ? 'active primary-active' : ''} onClick={() => updateDeviceState('tent', 'forward_medium')}>🚶 Orta</button>
-                  <button className={deviceStates.tent === 'forward_fast' ? 'active primary-active' : ''} onClick={() => updateDeviceState('tent', 'forward_fast')}>🚀 Hızlı</button>
+            </div>
+            <div className="card-body">
+              {isRaining && (
+                <div className="alert-banner alert-rain">
+                  🌧️ Yağmur yağıyor, tenteyi kapatmayı unutmayın!
+                </div>
+              )}
+              <button
+                className={`action-btn ${deviceStates.tent === 'closed' ? 'btn-idle' : 'btn-danger pulse-anim'}`}
+                onClick={() => updateDeviceState('tent', 'closed')}>
+                {deviceStates.tent === 'closed' ? '✅ Motor Beklemede' : '⛔ Motoru Durdur'}
+              </button>
+              <div className="tent-directions">
+                <div className="direction-group">
+                  <span className="direction-label">🔼 Aç (İleri)</span>
+                  <div className="speed-btns">
+                    <button className={deviceStates.tent === 'forward_slow' ? 'active accent' : ''} onClick={() => updateDeviceState('tent', 'forward_slow')}>🐢 Yavaş</button>
+                    <button className={deviceStates.tent === 'forward_medium' ? 'active accent' : ''} onClick={() => updateDeviceState('tent', 'forward_medium')}>🚶 Orta</button>
+                    <button className={deviceStates.tent === 'forward_fast' ? 'active accent' : ''} onClick={() => updateDeviceState('tent', 'forward_fast')}>🚀 Hızlı</button>
+                  </div>
+                </div>
+                <div className="direction-group">
+                  <span className="direction-label">🔽 Kapat (Geri)</span>
+                  <div className="speed-btns">
+                    <button className={deviceStates.tent === 'backward_slow' ? 'active warn' : ''} onClick={() => updateDeviceState('tent', 'backward_slow')}>🐢 Yavaş</button>
+                    <button className={deviceStates.tent === 'backward_medium' ? 'active warn' : ''} onClick={() => updateDeviceState('tent', 'backward_medium')}>🚶 Orta</button>
+                    <button className={deviceStates.tent === 'backward_fast' ? 'active warn' : ''} onClick={() => updateDeviceState('tent', 'backward_fast')}>🚀 Hızlı</button>
+                  </div>
                 </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <p className="label-text" style={{ textAlign: 'center' }}>🔽 Kapat (Geri)</p>
-                <div className="button-group" style={{ flexDirection: 'column', gap: '5px' }}>
-                  <button className={deviceStates.tent === 'backward_slow' ? 'active danger-active' : ''} onClick={() => updateDeviceState('tent', 'backward_slow')}>🐢 Yavaş</button>
-                  <button className={deviceStates.tent === 'backward_medium' ? 'active danger-active' : ''} onClick={() => updateDeviceState('tent', 'backward_medium')}>🚶 Orta</button>
-                  <button className={deviceStates.tent === 'backward_fast' ? 'active danger-active' : ''} onClick={() => updateDeviceState('tent', 'backward_fast')}>🚀 Hızlı</button>
+            </div>
+          </div>
+
+          {/* =================== 2. Isıtma Sistemi =================== */}
+          <div className="device-card card-heat" style={{'--card-accent': '#f97316'}}>
+            <div className="card-glow"></div>
+            <div className="card-header">
+              <div className="card-icon-wrap" style={{'--icon-bg': 'rgba(249, 115, 22, 0.15)'}}>🔥</div>
+              <div className="card-title-area">
+                <h2>Isıtma Sistemi</h2>
+                <span className={`mini-badge ${(deviceStates.heater_1 === 'on' || deviceStates.heater_2 === 'on') ? 'badge-hot' : 'badge-off'}`}>
+                  {deviceStates.heater_1 === 'on' && deviceStates.heater_2 === 'on'
+                    ? '🔥 İkisi Açık'
+                    : deviceStates.heater_1 === 'on'
+                      ? '🔥 Salon Açık'
+                      : deviceStates.heater_2 === 'on'
+                        ? '🔥 Yatak Odası Açık'
+                        : 'Kapalı'}
+                </span>
+              </div>
+            </div>
+            <div className="card-body">
+              {/* Salon */}
+              <div className="room-block">
+                <div className="room-info">
+                  <div className="room-header">
+                    <span className="room-name">🛋️ Salon</span>
+                    <span className="sensor-tag">DS18B20</span>
+                  </div>
+                  <div className="temp-display">
+                    {isPiConnected && deviceStates.room_1_temp ? (
+                      <>
+                        <span className="temp-number">{deviceStates.room_1_temp}</span>
+                        <span className="temp-unit">°C</span>
+                      </>
+                    ) : (
+                      <span className="temp-na">{isPiConnected ? 'Sensör Yok' : 'Veri Yok'}</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  className={`action-btn ${deviceStates.heater_1 === 'on' ? 'btn-danger' : 'btn-primary'}`}
+                  onClick={() => updateDeviceState('heater_1', deviceStates.heater_1 === 'on' ? 'off' : 'on')}>
+                  {deviceStates.heater_1 === 'on' ? '🔥 Salon Isıtıcıyı Kapat' : '❄️ Salon Isıtıcıyı Aç'}
+                </button>
+              </div>
+
+              <div className="room-divider"></div>
+
+              {/* Yatak Odası */}
+              <div className="room-block">
+                <div className="room-info">
+                  <div className="room-header">
+                    <span className="room-name">🛏️ Yatak Odası</span>
+                    <span className="sensor-tag">DS18B20</span>
+                  </div>
+                  <div className="temp-display">
+                    {isPiConnected && deviceStates.room_2_temp ? (
+                      <>
+                        <span className="temp-number">{deviceStates.room_2_temp}</span>
+                        <span className="temp-unit">°C</span>
+                      </>
+                    ) : (
+                      <span className="temp-na">{isPiConnected ? 'Sensör Yok' : 'Veri Yok'}</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  className={`action-btn ${deviceStates.heater_2 === 'on' ? 'btn-danger' : 'btn-primary'}`}
+                  onClick={() => updateDeviceState('heater_2', deviceStates.heater_2 === 'on' ? 'off' : 'on')}>
+                  {deviceStates.heater_2 === 'on' ? '🔥 Yatak Odası Isıtıcıyı Kapat' : '❄️ Yatak Odası Isıtıcıyı Aç'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* =================== 3. Soğutma Fanları =================== */}
+          <div className="device-card card-fan" style={{'--card-accent': '#06b6d4'}}>
+            <div className="card-glow"></div>
+            <div className="card-header">
+              <div className="card-icon-wrap" style={{'--icon-bg': 'rgba(6, 182, 212, 0.15)'}}>❄️</div>
+              <div className="card-title-area">
+                <h2>Soğutma Fanları</h2>
+              </div>
+            </div>
+            <div className="card-body">
+              <div className="fan-room">
+                <span className="fan-room-label">🛋️ Salon Fanı</span>
+                <div className="seg-control">
+                  <button className={deviceStates.fan_1 === 'off' ? 'active off' : ''} onClick={() => updateDeviceState('fan_1', 'off')}>Kapalı</button>
+                  <button className={deviceStates.fan_1 === 'slow' ? 'active on' : ''} onClick={() => updateDeviceState('fan_1', 'slow')}>Yavaş</button>
+                  <button className={deviceStates.fan_1 === 'medium' ? 'active on' : ''} onClick={() => updateDeviceState('fan_1', 'medium')}>Orta</button>
+                  <button className={deviceStates.fan_1 === 'fast' ? 'active on' : ''} onClick={() => updateDeviceState('fan_1', 'fast')}>Hızlı</button>
+                </div>
+              </div>
+              <div className="room-divider"></div>
+              <div className="fan-room">
+                <span className="fan-room-label">🛏️ Yatak Odası Fanı</span>
+                <div className="seg-control">
+                  <button className={deviceStates.fan_2 === 'off' ? 'active off' : ''} onClick={() => updateDeviceState('fan_2', 'off')}>Kapalı</button>
+                  <button className={deviceStates.fan_2 === 'slow' ? 'active on' : ''} onClick={() => updateDeviceState('fan_2', 'slow')}>Yavaş</button>
+                  <button className={deviceStates.fan_2 === 'medium' ? 'active on' : ''} onClick={() => updateDeviceState('fan_2', 'medium')}>Orta</button>
+                  <button className={deviceStates.fan_2 === 'fast' ? 'active on' : ''} onClick={() => updateDeviceState('fan_2', 'fast')}>Hızlı</button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* =================== 2. Sıcaklık & Isıtıcı =================== */}
-        <div className="card">
-          <div className="card-header">
-            <h2>🔥 Isıtma Sistemi</h2>
-            <div className={`status-indicator ${(deviceStates.heater_1 === 'on' || deviceStates.heater_2 === 'on') ? 'badge-danger' : 'badge-ok'}`}>
-              <div className={`status-dot ${(deviceStates.heater_1 === 'on' || deviceStates.heater_2 === 'on') ? 'active' : 'inactive'}`}></div>
-              {deviceStates.heater_1 === 'on' && deviceStates.heater_2 === 'on'
-                ? 'Her İki Isıtıcı Açık'
-                : deviceStates.heater_1 === 'on'
-                  ? 'Salon Isıtıcı Açık'
-                  : deviceStates.heater_2 === 'on'
-                    ? 'Yatak Odası Isıtıcı Açık'
-                    : 'Isıtıcılar Kapalı'}
-            </div>
-          </div>
-          <div className="card-content">
-            {/* Salon */}
-            <div className="heater-room-block">
-              <div className="temp-card" style={{ marginBottom: '0.75rem' }}>
-                <span className="temp-label">🛋️ Salon</span>
-                <span className="temp-val">
-                  {isPiConnected && deviceStates.room_1_temp ? (
-                    <>
-                      {deviceStates.room_1_temp}
-                      <small style={{ fontSize: '1rem' }}>°C</small>
-                    </>
-                  ) : (
-                    <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>
-                      {isPiConnected ? 'Sensör Yok' : 'Veri Yok'}
-                    </span>
-                  )}
+          {/* =================== 4. Aydınlatma Kontrolü =================== */}
+          <div className="device-card card-light" style={{'--card-accent': '#eab308'}}>
+            <div className="card-glow"></div>
+            <div className="card-header">
+              <div className="card-icon-wrap" style={{'--icon-bg': 'rgba(234, 179, 8, 0.15)'}}>🔆</div>
+              <div className="card-title-area">
+                <h2>Aydınlatma</h2>
+                <span className="mini-badge" style={{
+                  background: isPiConnected ? `rgba(${luxInfo.level >= 3 ? '251,191,36' : '99,102,241'}, 0.15)` : 'rgba(148,163,184,0.08)',
+                  color: isPiConnected ? luxInfo.color : '#94a3b8'
+                }}>
+                  {!isPiConnected ? 'Veri Yok' : luxInfo.label}
                 </span>
-                <span className="temp-src">DS18B20 Sensör</span>
-              </div>
-              <button
-                className={`primary-action ${deviceStates.heater_1 === 'on' ? 'danger-action' : ''}`}
-                style={{ width: '100%' }}
-                onClick={() => updateDeviceState('heater_1', deviceStates.heater_1 === 'on' ? 'off' : 'on')}>
-                {deviceStates.heater_1 === 'on' ? '🔥 Salon Isıtıcıyı Kapat' : '❄️ Salon Isıtıcıyı Aç'}
-              </button>
-            </div>
-
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '1rem 0' }}></div>
-
-            {/* Yatak Odası */}
-            <div className="heater-room-block">
-              <div className="temp-card" style={{ marginBottom: '0.75rem' }}>
-                <span className="temp-label">🛏️ Yatak Odası</span>
-                <span className="temp-val">
-                  {isPiConnected && deviceStates.room_2_temp ? (
-                    <>
-                      {deviceStates.room_2_temp}
-                      <small style={{ fontSize: '1rem' }}>°C</small>
-                    </>
-                  ) : (
-                    <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>
-                      {isPiConnected ? 'Sensör Yok' : 'Veri Yok'}
-                    </span>
-                  )}
-                </span>
-                <span className="temp-src">DS18B20 Sensör</span>
-              </div>
-              <button
-                className={`primary-action ${deviceStates.heater_2 === 'on' ? 'danger-action' : ''}`}
-                style={{ width: '100%' }}
-                onClick={() => updateDeviceState('heater_2', deviceStates.heater_2 === 'on' ? 'off' : 'on')}>
-                {deviceStates.heater_2 === 'on' ? '🔥 Yatak Odası Isıtıcıyı Kapat' : '❄️ Yatak Odası Isıtıcıyı Aç'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* =================== 3. Soğutma Fanları =================== */}
-        <div className="card">
-          <div className="card-header">
-            <h2>❄️ Soğutma Fanları</h2>
-          </div>
-          <div className="card-content">
-            <div>
-              <p className="label-text">🛋️ Salon Fanı</p>
-              <div className="button-group">
-                <button className={deviceStates.fan_1 === 'off' ? 'active danger-active' : ''} onClick={() => updateDeviceState('fan_1', 'off')}>Kapalı</button>
-                <button className={deviceStates.fan_1 === 'slow' ? 'active primary-active' : ''} onClick={() => updateDeviceState('fan_1', 'slow')}>Yavaş</button>
-                <button className={deviceStates.fan_1 === 'medium' ? 'active primary-active' : ''} onClick={() => updateDeviceState('fan_1', 'medium')}>Orta</button>
-                <button className={deviceStates.fan_1 === 'fast' ? 'active primary-active' : ''} onClick={() => updateDeviceState('fan_1', 'fast')}>Hızlı</button>
               </div>
             </div>
-            <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
-              <p className="label-text">🛏️ Yatak Odası Fanı</p>
-              <div className="button-group">
-                <button className={deviceStates.fan_2 === 'off' ? 'active danger-active' : ''} onClick={() => updateDeviceState('fan_2', 'off')}>Kapalı</button>
-                <button className={deviceStates.fan_2 === 'slow' ? 'active primary-active' : ''} onClick={() => updateDeviceState('fan_2', 'slow')}>Yavaş</button>
-                <button className={deviceStates.fan_2 === 'medium' ? 'active primary-active' : ''} onClick={() => updateDeviceState('fan_2', 'medium')}>Orta</button>
-                <button className={deviceStates.fan_2 === 'fast' ? 'active primary-active' : ''} onClick={() => updateDeviceState('fan_2', 'fast')}>Hızlı</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-
-
-        {/* =================== 5. Ortam Işığı & Ampul =================== */}
-        <div className="card">
-          <div className="card-header">
-            <h2>🔆 Aydınlatma Kontrolü</h2>
-            <div className="status-indicator" style={
-              !isPiConnected ? { background: '#1e293b', borderColor: '#334155', color: '#94a3b8' } :
-              {
-                background: `rgba(${luxInfo.level >= 3 ? '251, 191, 36' : '99, 102, 241'}, ${0.1 + luxInfo.level * 0.05})`,
-                borderColor: `rgba(${luxInfo.level >= 3 ? '251, 191, 36' : '99, 102, 241'}, 0.4)`
-              }
-            }>
-              {!isPiConnected ? 'Veri Yok' : luxInfo.label}
-            </div>
-          </div>
-          <div className="card-content">
-            {/* BH1750 Ortam Işık Sensörü */}
-            <div className="ambient-light-section">
-              <p className="label-text">☀️ Ortam Işık Seviyesi — BH1750 Sensör</p>
-              <div className="lux-display">
-                <div className="lux-value-wrapper">
-                  <span className="lux-value" style={{ color: luxInfo.color }}>
+            <div className="card-body">
+              {/* Ortam Işık Sensörü */}
+              <div className="light-sensor-area">
+                <span className="section-label">☀️ Ortam Işığı — BH1750</span>
+                <div className="lux-card">
+                  <span className="lux-big" style={{ color: luxInfo.color }}>
                     {isPiConnected && ambientLux !== null ? ambientLux : '—'}
                   </span>
-                  <span className="lux-unit">lux</span>
+                  <span className="lux-unit-label">lux</span>
+                  <span className="lux-desc" style={{ color: luxInfo.color }}>
+                    {isPiConnected ? luxInfo.label : 'Pi Bağlı Değil'}
+                  </span>
                 </div>
-                <span className="lux-description" style={{ color: luxInfo.color }}>
-                  {isPiConnected ? luxInfo.label : 'Pi Bağlı Değil'}
-                </span>
-              </div>
-              {/* Lux seviye barı */}
-              <div className="lux-bar-container">
-                <div className="lux-bar-labels">
-                  <span>🌙</span>
-                  <span>☀️</span>
-                </div>
-                <div className="lux-bar">
-                  <div className="lux-bar-fill" style={{
-                    width: isPiConnected && ambientLux !== null
-                      ? `${Math.min((ambientLux / 2000) * 100, 100)}%`
-                      : '0%',
-                    background: isPiConnected
-                      ? `linear-gradient(90deg, #6366f1, #8b5cf6, #f59e0b, #fbbf24)`
-                      : '#475569'
-                  }}></div>
+                <div className="lux-bar-wrap">
+                  <div className="lux-bar-ends"><span>🌙</span><span>☀️</span></div>
+                  <div className="lux-track">
+                    <div className="lux-fill" style={{
+                      width: isPiConnected && ambientLux !== null
+                        ? `${Math.min((ambientLux / 2000) * 100, 100)}%`
+                        : '0%',
+                      background: isPiConnected
+                        ? 'linear-gradient(90deg, #6366f1, #8b5cf6, #f59e0b, #fbbf24)'
+                        : '#475569'
+                    }}></div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.5rem 0' }}></div>
+              <div className="room-divider"></div>
 
-            {/* Ampul Parlaklık Kontrolü */}
-            <div className="bulb-control-section">
-              <p className="label-text">💡 Ampul Parlaklık Kontrolü — PWM</p>
-              <div className="slider-container">
-                <div className="slider-labels">
-                  <span>Kapalı</span>
-                  <span style={{ color: bulbPct > 0 ? '#fbbf24' : 'var(--text-muted)', fontWeight: '700' }}>%{bulbPct}</span>
-                  <span>Tam</span>
+              {/* Ampul Parlaklık Kontrolü */}
+              <div className="bulb-area">
+                <span className="section-label">💡 Ampul Parlaklığı — PWM</span>
+                <div className="bulb-slider-row">
+                  <span className="slider-edge">Kapalı</span>
+                  <span className="slider-value" style={{ color: bulbPct > 0 ? '#fbbf24' : '#94a3b8' }}>%{bulbPct}</span>
+                  <span className="slider-edge">Tam</span>
                 </div>
                 <input
                   type="range"
                   min="0"
                   max="100"
                   value={bulbPct}
-                  className="bulb-slider"
+                  className="range-input"
                   onPointerDown={() => { isDraggingBulbRef.current = true; }}
                   onChange={(e) => setDeviceStates(prev => ({ ...prev, bulb_brightness: e.target.value }))}
                   onPointerUp={(e) => {
@@ -402,104 +425,100 @@ function App() {
                     updateDeviceState('bulb_brightness', e.target.value);
                   }}
                 />
-              </div>
-              <div className="bulb-visualizer">
-                <div className="bulb-icon-wrapper">
-                  <span className="bulb-icon" style={{
-                    filter: `brightness(${0.3 + (bulbPct / 100) * 1.5})`,
-                    opacity: bulbPct > 0 ? 1 : 0.3,
-                    textShadow: bulbPct > 50 ? `0 0 ${bulbPct / 3}px rgba(251, 191, 36, 0.8)` : 'none'
-                  }}>💡</span>
-                  <span className="bulb-status">
-                    {bulbPct === 0 ? 'Kapalı' : bulbPct < 30 ? 'Kısık' : bulbPct < 70 ? 'Orta' : 'Tam Güç'}
-                  </span>
-                </div>
-                <div className="bulb-bar">
-                  <div className="bulb-bar-fill" style={{
-                    width: `${bulbPct}%`,
-                    background: bulbPct > 0
-                      ? `linear-gradient(90deg, rgba(251, 191, 36, 0.3), rgba(251, 191, 36, 0.9))`
-                      : '#475569',
-                    boxShadow: bulbPct > 20 ? `0 0 ${bulbPct / 5}px rgba(251, 191, 36, 0.5)` : 'none'
-                  }}></div>
+                <div className="bulb-visual">
+                  <div className="bulb-emoji-wrap">
+                    <span className="bulb-emoji" style={{
+                      filter: `brightness(${0.3 + (bulbPct / 100) * 1.5})`,
+                      opacity: bulbPct > 0 ? 1 : 0.3,
+                      textShadow: bulbPct > 50 ? `0 0 ${bulbPct / 3}px rgba(251, 191, 36, 0.8)` : 'none'
+                    }}>💡</span>
+                    <span className="bulb-state">
+                      {bulbPct === 0 ? 'Kapalı' : bulbPct < 30 ? 'Kısık' : bulbPct < 70 ? 'Orta' : 'Tam Güç'}
+                    </span>
+                  </div>
+                  <div className="bulb-progress-track">
+                    <div className="bulb-progress-fill" style={{
+                      width: `${bulbPct}%`,
+                      background: bulbPct > 0
+                        ? 'linear-gradient(90deg, rgba(251, 191, 36, 0.3), rgba(251, 191, 36, 0.9))'
+                        : '#475569',
+                      boxShadow: bulbPct > 20 ? `0 0 ${bulbPct / 5}px rgba(251, 191, 36, 0.5)` : 'none'
+                    }}></div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* =================== 5. Güvenlik Kamerası =================== */}
+          <div className="device-card card-camera card-full" style={{'--card-accent': '#10b981'}}>
+            <div className="card-glow"></div>
+            <div className="card-header">
+              <div className="card-icon-wrap" style={{'--icon-bg': 'rgba(16, 185, 129, 0.15)'}}>📷</div>
+              <div className="card-title-area">
+                <h2>Güvenlik Kamerası</h2>
+                <span className="mini-badge badge-live">
+                  <span className="rec-dot-mini"></span> Canlı
+                </span>
+              </div>
+            </div>
+            <div className="card-body">
+              <div className="camera-layout">
+                {/* Kamera önizleme */}
+                <div className="camera-preview">
+                  <div className="camera-overlay-grid"></div>
+                  <div className="camera-rec-tag">
+                    <span className="rec-dot-mini"></span> REC
+                  </div>
+                  {photoBase64 ? (
+                    <img
+                      src={`data:image/jpeg;base64,${photoBase64}`}
+                      alt="Son kamera görüntüsü"
+                    />
+                  ) : (
+                    <span className="camera-placeholder">KAMERA BEKLİYOR</span>
+                  )}
+                </div>
+
+                {/* Kontroller */}
+                <div className="camera-actions">
+                  <button className="action-btn btn-capture" onClick={handleCapturePhoto}>
+                    📸 Fotoğraf Çek
+                  </button>
+                  {captureStatus && (
+                    <p className="feedback-msg">{captureStatus}</p>
+                  )}
+
+                  <div className="room-divider"></div>
+
+                  <span className="section-label">✉️ Son Fotoğrafı Gmail ile Gönder</span>
+                  <div className="email-input-wrap">
+                    <span className="email-at">@</span>
+                    <input
+                      type="email"
+                      placeholder="ornek@gmail.com"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSendEmail()}
+                    />
+                  </div>
+                  <button className="action-btn btn-primary" onClick={handleSendEmail}>
+                    📤 Fotoğrafı Gönder
+                  </button>
+                  {emailStatus && (
+                    <p className="feedback-msg" style={{
+                      color: emailStatus.startsWith('✅') ? '#10b981' : '#f59e0b'
+                    }}>
+                      {emailStatus}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
-
-        {/* =================== 5. Kamera & E-posta =================== */}
-        <div className="card card-wide">
-          <div className="card-header">
-            <h2>📷 Güvenlik Kamerası</h2>
-            <div className="status-indicator">
-              <div className="rec-dot" style={{ display: 'inline-block', marginRight: '6px' }}></div>
-              Canlı
-            </div>
-          </div>
-          <div className="card-content">
-            <div className="camera-section">
-              {/* Kamera önizleme / son fotoğraf */}
-              <div className="camera-feed">
-                <div className="camera-grid-lines"></div>
-                <div className="rec-indicator">
-                  <div className="rec-dot"></div>
-                  REC
-                </div>
-                {photoBase64 ? (
-                  <img
-                    src={`data:image/jpeg;base64,${photoBase64}`}
-                    alt="Son kamera görüntüsü"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }}
-                  />
-                ) : (
-                  <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: '600', letterSpacing: '2px', fontSize: '0.85rem' }}>
-                    KAMERA BEKLİYOR
-                  </span>
-                )}
-              </div>
-
-              {/* Fotoğraf çek + E-posta bölümü yan yana */}
-              <div className="camera-controls">
-                <button
-                  className="primary-action capture-btn"
-                  onClick={handleCapturePhoto}
-                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
-                  📸 Fotoğraf Çek
-                </button>
-                {captureStatus && (
-                  <p className="status-msg">{captureStatus}</p>
-                )}
-
-                <div className="divider"></div>
-
-                <p className="label-text">✉️ Son Fotoğrafı Gmail ile Gönder</p>
-                <div className="input-wrapper">
-                  <span className="input-icon">@</span>
-                  <input
-                    type="email"
-                    placeholder="ornek@gmail.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSendEmail()}
-                  />
-                </div>
-                <button className="primary-action" onClick={handleSendEmail}>
-                  📤 Fotoğrafı E-Posta ile Gönder
-                </button>
-                {emailStatus && (
-                  <p className="status-msg" style={{
-                    color: emailStatus.startsWith('✅') ? 'var(--accent-success)' : 'var(--accent-warning)'
-                  }}>
-                    {emailStatus}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
+      </main>
     </>
   );
 }
