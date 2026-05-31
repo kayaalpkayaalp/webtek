@@ -39,7 +39,7 @@ _bulb_pwm  = None
 _tent_state = "closed"
 _tent_thread = None
 _tent_position = 0          # Mevcut pozisyon (adım sayısı)
-MAX_TENT_STEPS = 1138       # 100 derece için maksimum adım (28BYJ-48 Half-Step)
+MAX_TENT_STEPS = 1365       # 120 derece için maksimum adım (28BYJ-48 Half-Step)
 
 # ULN2003 Half-Step (8 Adım) Dizilimi
 _STEP_SEQ = [
