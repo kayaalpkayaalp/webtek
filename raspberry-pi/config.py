@@ -22,7 +22,7 @@ NOT: Eğer servo motor kullanıyorsan TENT_PWM_PIN'e servo bağla.
 
 # ─── API Adresi ─────────────────────────────────────────────────────────────
 # Vercel'e deploy edildi:
-API_URL = "https://webtek-alpha.vercel.app/api"
+API_URL = "https://webtekson.vercel.app/api"
 
 # Yerel test için (gerekirse bu satırı aç, üsttekini kapat):
 # API_URL = "http://localhost:3000/api"

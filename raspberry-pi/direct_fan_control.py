@@ -3,7 +3,7 @@ import time, json, requests, RPi.GPIO as GPIO
 # ---------------------------------------------------------------------------
 # Direct on/off control of Fan 1 (GPIO 18) via the Web API.
 # ---------------------------------------------------------------------------
-API_URL = "https://webtek-alpha.vercel.app/api"
+API_URL = "https://webtekson.vercel.app/api"
 POLL_INTERVAL = 2  # seconds between API polls
 
 FAN_PIN = 18

@@ -4,7 +4,7 @@ import smbus2  # I2C haberleşmesi için (BH1750 sensörü)
 # import RPi.GPIO as GPIO  # Raspberry Pi üzerinde donanımları kontrol etmek için kullanılır.
 
 # NOT: Vercel'e deploy edildi.
-API_URL = "https://webtek-alpha.vercel.app/api"
+API_URL = "https://webtekson.vercel.app/api"
 
 # GPIO PIN TANIMLAMALARI (Örnek)
 FAN_1_PIN = 17
